@@ -1,0 +1,11 @@
+*.db
+*.lsif
+*.vsix
+*/node_modules/
+.DS_Store
+.vscode-test/
+Thumbs.db
+dist
+node_modules
+npm-debug.log
+out
