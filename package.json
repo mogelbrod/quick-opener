@@ -1,5 +1,5 @@
 {
-  "name": "quick-opener",
+  "name": "quickopener",
   "displayName": "Quick Opener",
   "description": "Open/create files/directories from anywhere with fuzzy autocompletion",
   "keywords": [
@@ -32,18 +32,37 @@
   },
   "main": "./dist/extension.js",
   "activationEvents": [
-    "onCommand:quick-opener.show"
+    "onCommand:quickOpener.show"
   ],
   "contributes": {
+    "configuration": {
+      "title": "Quick Opener",
+      "properties": {
+        "quickOpener.exclude": {
+          "description": "List of directory/file names to exclude from the list. Compared against the name of each path component.",
+          "type": "array",
+          "default": ["node_modules", ".git", ".DS_Store"],
+          "items": {
+            "type": "string"
+          }
+        },
+        "quickOpener.timeout": {
+          "description": "Maximum time (in ms) for scanner to run between input and showing results.",
+          "type": "number",
+          "default": 200,
+          "minimum": 0
+        }
+      }
+    },
     "commands": [
       {
-        "command": "quick-opener.show",
+        "command": "quickOpener.show",
         "title": "Quick open path"
       }
     ],
     "keybindings": [
       {
-        "command": "quick-opener.show",
+        "command": "quickOpener.show",
         "key": "ctrl+]",
         "mac": "cmd+]"
       }

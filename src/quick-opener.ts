@@ -6,12 +6,13 @@ import { PathScanner, ScanEntry } from './path-scanner'
 import * as putils from './path-utils'
 
 export class QuickOpener {
+  /** Quick pick instance */
   public readonly qp = vscode.window.createQuickPick()
-  public readonly scanner = new PathScanner()
+  /** Scanner instance */
+  public readonly scanner: PathScanner
 
   /** Current relative path - can be changed by user throughout the pick session */
   private relative: string
-
   /** Current vscode workspace paths */
   private workspacePaths: Set<string>
 
@@ -19,9 +20,14 @@ export class QuickOpener {
   private readonly homePath = os.homedir()
   private readonly homePrefix = '~'
 
-  constructor(options: { initial?: string }) {
+  constructor(options: {
+    initial?: string
+    scanner?: PathScanner
+  }) {
     this.updateRelative(options.initial ?? this.homePath)
     this.updateWorkspacePaths()
+
+    this.scanner = options.scanner ?? new PathScanner()
 
     this.qp.title = 'Quick Opener'
     this.qp.placeholder = 'Enter a relative or absolute path to open…'
@@ -88,7 +94,7 @@ export class QuickOpener {
 
     for (let i = rootParts.length; i > 0; i--) {
       const rootCandidate = rootParts.slice(0, i).join(path.sep)
-      rootEntry = await this.scanner.scan(rootCandidate, 100)
+      rootEntry = await this.scanner.scan(rootCandidate)
       // console.log(rootEntry.error ? 'skipped' : 'chosen', rootCandidate)
       if (!rootEntry.error) {
         break

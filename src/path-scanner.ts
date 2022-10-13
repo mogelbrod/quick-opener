@@ -21,19 +21,32 @@ export type ScanEntry = {
 export const DEFAULT_EXCLUDES: readonly string[] = ['node_modules', '.git', '.DS_Store']
 
 export class PathScanner {
-  dirs = new Map<string, ScanEntry>()
-  excluded: Set<string>
-  dirTTL: number
+  /** List of directory/file names to exclude from result lists. */
+  public exclude: Set<string>
+
+  /** Directory scan cache for this instance */
+  public readonly dirs = new Map<string, ScanEntry>()
+
+  /** Maximum time (in ms) for scanner to run between input and showing results */
+  public timeout: number
+
+  /**
+   * Maximum time for a scan entry to be considered fresh, after which any
+   * subsequent accesses will trigger a new scan.
+   */
+  public dirTTL: number
 
   constructor({
+    exclude = DEFAULT_EXCLUDES as string[],
+    timeout = 100,
     dirTTL = 30e3,
-    excluded = DEFAULT_EXCLUDES as string[],
   } = {}) {
+    this.exclude = new Set(exclude)
+    this.timeout = timeout
     this.dirTTL = dirTTL
-    this.excluded = new Set(excluded)
   }
 
-  async scan(root: string, maxTime = 100): ScanWorker {
+  async scan(root: string, maxTime = this.timeout): ScanWorker {
     root = this.normalizePath(root)
 
     // console.log('scan', root)
@@ -45,41 +58,50 @@ export class PathScanner {
       dirs: [],
       files: [],
     }
-    if (rootEntry.worker) { return rootEntry.worker }
+    if (rootEntry.worker) {
+      return rootEntry.worker
+    }
 
     this.dirs.set(root, rootEntry)
 
-    return rootEntry.worker = readdir(root, { withFileTypes: true }).then(entries => {
-      const timestampAfter = Date.now()
-      const remainingTime = timestamp + maxTime - timestampAfter
+    return (rootEntry.worker = readdir(root, { withFileTypes: true })
+      .then((entries) => {
+        const timestampAfter = Date.now()
+        const remainingTime = timestamp + maxTime - timestampAfter
 
-      // console.log('scanned', root, remainingTime, entries.length)
+        // console.log('scanned', root, remainingTime, entries.length)
 
-      const workers: Promise<any>[] = []
+        const workers: Promise<any>[] = []
 
-      for (const entry of entries) {
-        if (this.excluded.has(entry.name)) {
-          continue
+        for (const entry of entries) {
+          if (this.exclude.has(entry.name)) {
+            continue
+          }
+          const childPath = root + entry.name
+          const isDir = entry.isDirectory()
+          if (remainingTime > 0 && isDir && !this.getEntry(childPath)) {
+            workers.push(this.scan(childPath, remainingTime))
+          }
+          rootEntry[isDir ? 'dirs' : 'files'].push(childPath)
         }
-        const childPath = root + entry.name
-        const isDir = entry.isDirectory()
-        if (remainingTime > 0 && isDir && !this.getEntry(childPath)) {
-          workers.push(this.scan(childPath, remainingTime))
-        }
-        rootEntry[isDir ? 'dirs' : 'files'].push(childPath)
-      }
 
-      return Promise.race([
-        new Promise(resolve => setTimeout(resolve, Math.max(0, remainingTime))),
-        Promise.allSettled(workers),
-      ]).then(() => rootEntry)
-    }).catch(error => {
-      rootEntry.error = error
-      return rootEntry
-    })
+        return Promise.race([
+          new Promise((resolve) =>
+            setTimeout(resolve, Math.max(0, remainingTime)),
+          ),
+          Promise.allSettled(workers),
+        ]).then(() => rootEntry)
+      })
+      .catch((error) => {
+        rootEntry.error = error
+        return rootEntry
+      }))
   }
 
-  forEach(root: string | ScanEntry, callback: (pth: string, isDir: boolean) => void) {
+  forEach(
+    root: string | ScanEntry,
+    callback: (pth: string, isDir: boolean) => void,
+  ) {
     const queue = [root && typeof root === 'object' ? root.path : root]
     const result: string[] = []
 
@@ -88,7 +110,9 @@ export class PathScanner {
 
     while (queue.length) {
       const entry = this.getEntry(queue.pop() as string)
-      if (!entry) { continue }
+      if (!entry) {
+        continue
+      }
       if (entry.dirs.length) {
         queue.push(...entry.dirs)
         entry.dirs.forEach(dirCallback)
