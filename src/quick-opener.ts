@@ -20,9 +20,8 @@ export class QuickOpener {
   private readonly homePrefix = '~'
 
   constructor(options: { initial?: string }) {
-    // Explicit assignment only to satisfy typescript
-    this.relative = this.updateRelative(options.initial ?? this.homePath)
-    this.workspacePaths = this.updateWorkspacePaths()
+    this.updateRelative(options.initial ?? this.homePath)
+    this.updateWorkspacePaths()
 
     this.qp.title = 'Quick Opener'
     this.qp.placeholder = 'Enter a relative or absolute path to open…'
