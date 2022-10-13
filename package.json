@@ -39,7 +39,7 @@
       "title": "Quick Opener",
       "properties": {
         "quickOpener.exclude": {
-          "description": "List of directory/file names to exclude from the list. Compared against the name of each path component.",
+          "description": "List of directory/file names to exclude from the results. Compared against the name of each path component.",
           "type": "array",
           "default": ["node_modules", ".git", ".DS_Store"],
           "items": {
