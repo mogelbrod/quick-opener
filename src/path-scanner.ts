@@ -92,8 +92,12 @@ export class PathScanner {
           Promise.allSettled(workers),
         ]).then(() => rootEntry)
       })
-      .catch((error) => {
-        rootEntry.error = error
+      .catch((error: Error & { code?: string }) => {
+        rootEntry.errored = true
+        // Re-throw errors that don't appear to be file system errors
+        if (!error.code) {
+          throw error
+        }
         return rootEntry
       }))
   }

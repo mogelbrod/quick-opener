@@ -68,6 +68,7 @@ export class QuickOpener {
 
   /** Update item list in response to input change */
   async updateItems(input: string) {
+    try {
     const updateStart = Date.now()
 
     const items: vscode.QuickPickItem[] = []
@@ -138,6 +139,12 @@ export class QuickOpener {
     const updateDuration = Date.now() - updateStart
     console.log(`Generated ${items.length} items in ${updateDuration}ms`)
     this.qp.items = items
+    } catch (error: any) {
+      this.qp.items = [{
+        label: 'Error occurred',
+        detail: error.message,
+      }]
+    }
   }
 
   /** Handles quick pick accept events */
