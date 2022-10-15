@@ -24,7 +24,7 @@ export class QuickOpener {
     initial?: string
     scanner?: PathScanner
   }) {
-    this.updateRelative(options.initial ?? this.homePath)
+    this.updateRelative(options.initial ?? this.homePath, false)
     this.updateWorkspacePaths()
 
     this.scanner = options.scanner ?? new PathScanner()
@@ -48,9 +48,14 @@ export class QuickOpener {
   }
 
   /** Change current relative path */
-  updateRelative(absolutePath: string) {
+  updateRelative(absolutePath: string, updateItems = true) {
     this.relative = absolutePath
     this.qp.title = this.pathForDisplay(this.relative!, true)
+    this.qp.value = ''
+    if (updateItems) {
+      this.qp.items = []
+      this.updateItems(this.qp.value)
+    }
     return this.relative
   }
 
@@ -161,9 +166,6 @@ export class QuickOpener {
         (input === '..' && label === putils.appendDirSuffix(input))
       ) {
         this.updateRelative(labelResolved)
-        this.qp.value = ''
-        this.qp.items = []
-        this.updateItems('')
         return
       }
 
@@ -201,8 +203,6 @@ export class QuickOpener {
 
       case BUTTONS.change: {
         this.updateRelative(path.join(this.relative, target))
-        this.updateItems('')
-        this.qp.value = ''
         return
       }
 
