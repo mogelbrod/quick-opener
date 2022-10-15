@@ -64,8 +64,8 @@
     "keybindings": [
       {
         "command": "quickOpener.show",
-        "key": "ctrl+]",
-        "mac": "cmd+]"
+        "key": "ctrl+o",
+        "mac": "cmd+o"
       }
     ]
   },
