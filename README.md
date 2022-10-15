@@ -1,6 +1,6 @@
 # Quick Opener for [Visual Studio Code](https://code.visualstudio.com/)
 
-<!--<img width="40" src="icon.png" alt="" align="left">-->
+<!--<img width="40" src="https://raw.githubusercontent.com/mogelbrod/quick-opener/main/icon.png" alt="" align="left">-->
 
 A plugin that makes it easy to open files outside the VS Code workspace
 (or relative to the current file) using a
@@ -68,4 +68,4 @@ The _Create directory/file_ functionality will attempt to create directories whe
 
 ## Credits
 
-- [Icon](icon.png): Created with the assistance of DALL·E 2
+- [Icon](https://github.com/mogelbrod/quick-opener/blob/main/icon.png): Created with the assistance of DALL·E 2

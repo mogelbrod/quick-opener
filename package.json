@@ -15,7 +15,7 @@
   "categories": [
     "Other"
   ],
-  "icon": "icon.png",
+  "icon": "https://raw.githubusercontent.com/mogelbrod/quick-opener/main/icon.png",
   "homepage": "https://github.com/mogelbrod/quick-opener",
   "repository": {
     "type": "git",
@@ -79,7 +79,8 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "bundle": "vsce package"
+    "bundle": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
