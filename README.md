@@ -1,71 +1,71 @@
-# quick-opener README
+# Quick Opener for [Visual Studio Code](https://code.visualstudio.com/)
 
-This is the README for your extension "quick-opener". After writing up a brief description, we recommend including the following sections.
+<!--<img width="40" src="icon.png" alt="" align="left">-->
+
+A plugin that makes it easy to open files outside the VS Code workspace
+(or relative to the current file) using a
+[quick pick window](https://code.visualstudio.com/api/ux-guidelines/quick-picks).
+
+<img width="600" src="https://user-images.githubusercontent.com/150084/196005417-91f2bc86-2b7c-48fb-99ae-fef88514fd29.gif" alt="Animated example"><br>
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- Show the Quick Opener picker by pressing <kbd>Ctrl</kbd>-<kbd>O</kbd> (Mac: <kbd>⌘</kbd>-<kbd>O</kbd>)
+- Open any path across the file system using only the keyboard (no more native file system popups)
+- Fuzzy path matching using the built-in VS Code fuzzy matcher
+- Starts in directory of current file (if open) to make relative navigation quick and easy
+- Begin entering any absolute path (or `~/`) to quickly locate files outside the current workspace
+- Supports ancestor paths such as `..` for parent directory
+- Press <kbd>Enter</kbd> while a directory is highlighted to temporarily change the relative root
+- Additional functionality available as window and item buttons (hover over each button icon to see they do):
+  - Create new files and directories at the given path (ancestor directories created in the process)
+  - Open file in a vertical split
+  - Open directory in new VS Code window
+  - Add/remove directories to/from the current workspace
 
-For example if there is an image subfolder under your extension project workspace:
+## Extension contributions
 
-\!\[feature X\]\(images/feature-x.png\)
+### Commands
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- `quickOpener.show`: Show the Quick Opener picker.
 
-## Requirements
+### Settings
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- `quickOpener.exclude`: List of directory/file names to exclude from the results.
+  Compared against the name of each path component.<br>
+  _Default value:_ `["node_modules", ".git", ".DS_Store"]`
+- `quickOpener.timeout`: Maximum time (in ms) for scanner to run between input and showing results.<br>
+  _Default value:_ `200`
 
-## Extension Settings
+## Customize key binding
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+The default behaviour of the plugin is to take over the standard key binding to open a file/folder:
+<kbd>Ctrl</kbd>-<kbd>O</kbd> (Mac: <kbd>⌘</kbd>-<kbd>O</kbd>).
 
-For example:
+If you wish to use another key binding you can append the following to
+[keybindings.json](https://code.visualstudio.com/docs/getstarted/keybindings#_advanced-customization):
 
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+```json
+  {
+    "key": "cmd+o", // Revert the binding back to the editor default
+    "command": "-quickOpener.show"
+  },
+  {
+    "key": "cmd+shift+o", // New binding to use
+    "command": "quickOpener.show"
+  },
+```
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- The contents of nested subdirectories are sometimes not included in the
+  suggestions. This is due to a limitation of the current scanner, and will be
+  addressed in a future release.
 
-## Release Notes
+## Disclaimer
 
-Users appreciate release notes as you update your extension.
+The _Create directory/file_ functionality will attempt to create directories when necessary. This should not cause any data to be lost or overwritten, but I can unfortunately not guarantee that it will never happen in every possible situation.
 
-### 1.0.0
+## Credits
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- [Icon](icon.png): Created with the assistance of DALL·E 2
