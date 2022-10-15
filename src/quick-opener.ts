@@ -73,7 +73,7 @@ export class QuickOpener {
     const items: vscode.QuickPickItem[] = []
 
     const inputAbsolute = path.resolve(this.relative, input)
-    const inputParsed = path.parse(input)
+      const inputHasDirSuffix = putils.hasDirSuffix(input)
     const isAncestor = input.startsWith('..')
     const isAbsolute =
       inputParsed.root !== '' || input.startsWith(this.homePrefix)
@@ -91,7 +91,7 @@ export class QuickOpener {
       input === '' || putils.hasDirSuffix(input)
         ? this.directoryButtons(inputAbsolute)
         : baseName && !baseNameIsDot
-          ? [BUTTONS.createFile]
+          ? [inputHasDirSuffix ? BUTTONS.createDirectory : BUTTONS.createFile]
           : []
 
     let rootEntry: ScanEntry | undefined = undefined
@@ -186,18 +186,26 @@ export class QuickOpener {
     const uri = vscode.Uri.file(target)
 
     switch (button) {
+      case BUTTONS.createDirectory:
       case BUTTONS.createFile: {
+        const createFile = button === BUTTONS.createFile
         const exists = await fs.stat(target)
           .then(() => true)
           .catch(() => false)
         if (!exists) {
-          await fs.mkdir(path.dirname(target), { recursive: true })
+          await fs.mkdir(createFile ? path.dirname(target) : target, { recursive: true })
+          if (createFile) {
           await fs.appendFile(target, '')
         }
+        }
+        if (createFile) {
         vscode.workspace
           .openTextDocument(vscode.Uri.file(target))
           .then(vscode.window.showTextDocument)
         this.qp.dispose()
+        } else {
+          this.updateRelative(target)
+        }
         return
       }
 
@@ -288,6 +296,10 @@ const BUTTONS: Readonly<Record<string, vscode.QuickInputButton>> = {
   createFile: {
     tooltip: 'Create new file using input as path',
     iconPath: new vscode.ThemeIcon('new-file'),
+  },
+  createDirectory: {
+    tooltip: 'Create new directory using input as path',
+    iconPath: new vscode.ThemeIcon('new-folder'),
   },
   change: {
     tooltip: 'Change starting directory',
