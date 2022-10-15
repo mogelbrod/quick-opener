@@ -15,7 +15,7 @@
   "categories": [
     "Other"
   ],
-  "icon": "https://raw.githubusercontent.com/mogelbrod/quick-opener/main/icon.png",
+  "icon": "icon.png",
   "homepage": "https://github.com/mogelbrod/quick-opener",
   "repository": {
     "type": "git",
@@ -25,6 +25,7 @@
     "url": "https://github.com/mogelbrod/quick-opener/issues",
     "email": "victor@hallberg.cc"
   },
+  "publisher": "mogelbrod",
   "author": "Victor Hallberg <victor@hallberg.cc>",
   "license": "MIT",
   "version": "0.0.1",

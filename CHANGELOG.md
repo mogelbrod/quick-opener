@@ -4,6 +4,6 @@ All notable changes to the "quick-opener" extension will be documented in this f
 
 ## Unreleased
 
-## v0.1.0
+## v0.0.1
 
 - Initial release
