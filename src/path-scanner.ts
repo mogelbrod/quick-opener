@@ -1,20 +1,24 @@
-import { readdir } from 'fs/promises'
+import { readdir, stat } from 'fs/promises'
 import path = require('path')
 
 type ScanWorker = Promise<ScanEntry>
 
+/** Object used to track directories that have been encountered, and possibly scanned */
 export type ScanEntry = {
-  /** Absolute path to scanned directory, always ends with a `path.sep` */
+  /** Absolute path to directory, always ends with a `path.sep` */
   path: string
-  /** Time of scan in UNIX milliseconds */
+  /** Time entry was created in UNIX milliseconds */
   timestamp: number
   /** Directories found in `path` */
-  dirs: string[]
+  dirs?: string[]
   /** Files found in `path` */
-  files: string[]
-  /** Error if encountered during scanning */
-  error?: Error
-  /** Worker promise used to scan, resolves once done */
+  files?: string[]
+  /** Encountered error while scanning? */
+  errored?: boolean
+  /**
+   * Worker promise used to scan, resolves once done.
+   * Undefined means that the directory hasn't been scanned yet.
+   */
   worker?: ScanWorker
 }
 
@@ -52,15 +56,16 @@ export class PathScanner {
     // console.log('scan', root)
     const timestamp = Date.now()
 
-    const rootEntry = this.getEntry(root) || {
-      path: root,
-      timestamp,
-      dirs: [],
-      files: [],
-    }
+    const rootEntry = this.getEntry(root) || { path: root, timestamp }
     if (rootEntry.worker) {
       return rootEntry.worker
     }
+
+    // Reset directory contents in preparation for scan
+    Object.assign(rootEntry, {
+      dirs: [],
+      files: [],
+    })
 
     this.dirs.set(root, rootEntry)
 
@@ -82,7 +87,7 @@ export class PathScanner {
           if (remainingTime > 0 && isDir && !this.getEntry(childPath)) {
             workers.push(this.scan(childPath, remainingTime))
           }
-          rootEntry[isDir ? 'dirs' : 'files'].push(childPath)
+          rootEntry[isDir ? 'dirs' : 'files']!.push(childPath)
         }
 
         return Promise.race([
@@ -102,7 +107,7 @@ export class PathScanner {
       }))
   }
 
-  forEach(
+  public forEach(
     root: string | ScanEntry,
     callback: (pth: string, isDir: boolean) => void,
   ) {
@@ -117,17 +122,17 @@ export class PathScanner {
       if (!entry) {
         continue
       }
-      if (entry.dirs.length) {
+      if (entry.dirs?.length) {
         queue.push(...entry.dirs)
         entry.dirs.forEach(dirCallback)
       }
-      entry.files.forEach(fileCallback)
+      entry.files?.forEach(fileCallback)
     }
 
     return result
   }
 
-  toArray(root: string | ScanEntry): string[] {
+  public toArray(root: string | ScanEntry): string[] {
     const result: string[] = []
     this.forEach(root, (pth, isDir) => {
       result.push(isDir ? pth + path.sep : pth)
@@ -135,14 +140,32 @@ export class PathScanner {
     return result
   }
 
-  getEntry(pth: string): ScanEntry | undefined {
+  public getEntry(pth: string): ScanEntry | undefined {
     pth = this.normalizePath(pth)
     const entry = this.dirs.get(pth)
     if (entry && entry.timestamp + this.dirTTL > Date.now()) {
-      return entry
+      entry.worker = undefined
     }
-    this.dirs.delete(pth)
-    return undefined
+    return entry
+  }
+
+  /** Utilize the scanner to determine if a path points to a directory */
+  async isDirectory(pth: string): Promise<boolean> {
+    pth = this.normalizePath(pth)
+    const entry = this.getEntry(pth)
+    // Only valid directories are stored as entries
+    if (entry && !entry.errored) {
+      return true
+    }
+    // Check if the path points to a directory
+    // If so store it as an unscanned entry to enable later lookups
+    const isDir = await stat(pth)
+      .then((x) => x.isDirectory())
+      .catch(() => false)
+    if (isDir) {
+      this.dirs.set(pth, { path: pth, timestamp: Date.now() })
+    }
+    return isDir
   }
 
   normalizePath(pth: string): string {

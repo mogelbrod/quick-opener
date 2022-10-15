@@ -29,7 +29,6 @@ export class QuickOpener {
 
     this.scanner = options.scanner ?? new PathScanner()
 
-    this.qp.title = 'Quick Opener'
     this.qp.placeholder = 'Enter a relative or absolute path to open…'
     this.qp.onDidChangeValue(this.updateItems.bind(this))
     this.qp.onDidAccept(this.onAccept.bind(this))
@@ -69,76 +68,83 @@ export class QuickOpener {
   /** Update item list in response to input change */
   async updateItems(input: string) {
     try {
-    const updateStart = Date.now()
+      const updateStart = Date.now()
 
-    const items: vscode.QuickPickItem[] = []
-
-    const inputAbsolute = path.resolve(this.relative, input)
+      const inputParsed = path.parse(input)
+      const inputAbsolute = path.resolve(this.relative, input)
       const inputHasDirSuffix = putils.hasDirSuffix(input)
-    const isAncestor = input.startsWith('..')
-    const isAbsolute =
-      inputParsed.root !== '' || input.startsWith(this.homePrefix)
-    const baseName = path.basename(input)
-    const baseNameIsDot = putils.isDot(baseName)
-    const rootPath = isAbsolute
-      ? this.resolveRelative(input)
-      : isAncestor
-        ? path.resolve(this.relative, input)
-        : this.relative
+      const isAncestor = input.startsWith('..')
+      const isAbsolute =
+        inputParsed.root !== '' || input.startsWith(this.homePrefix)
+      const baseName = path.basename(input)
+      const baseNameIsDot = putils.isDot(baseName)
+      const rootPath = isAbsolute
+        ? this.resolveRelative(input)
+        : isAncestor
+          ? path.resolve(this.relative, input)
+          : this.relative
 
-    // console.log({ input, relative, rootPath, isAbsolute, isAncestor })
+      // console.log({ relative: this.relative, input, rootPath, isAbsolute, isAncestor })
 
-    this.qp.buttons =
-      input === '' || putils.hasDirSuffix(input)
+      // Immediately include ../ entry if not at root for quick navigation
+      if (isAncestor && path.parse(this.relative).dir) {
+        this.qp.items = [{
+          label: putils.appendDirSuffix('..'),
+          buttons: this.directoryButtons(path.resolve(this.relative, '..')),
+        }]
+      }
+
+      const inputIsDirectory = await this.scanner.isDirectory(inputAbsolute)
+
+      // Determine which buttons to show in quick pick titlebar
+      this.qp.buttons = inputIsDirectory
         ? this.directoryButtons(inputAbsolute)
         : baseName && !baseNameIsDot
           ? [inputHasDirSuffix ? BUTTONS.createDirectory : BUTTONS.createFile]
           : []
 
-    let rootEntry: ScanEntry | undefined = undefined
-    const rootParts = rootPath.split(path.sep)
+      // After this point the function latency may be noticeable
+      const items: vscode.QuickPickItem[] = []
 
-    for (let i = rootParts.length; i > 0; i--) {
-      const rootCandidate = rootParts.slice(0, i).join(path.sep)
-      rootEntry = await this.scanner.scan(rootCandidate)
-      // console.log(rootEntry.error ? 'skipped' : 'chosen', rootCandidate)
-      if (!rootEntry.error) {
-        break
+      let rootEntry: ScanEntry | undefined = undefined
+      const rootParts = rootPath.split(path.sep)
+
+      for (let i = rootParts.length; i > 0; i--) {
+        const rootCandidate = rootParts.slice(0, i).join(path.sep)
+        rootEntry = await this.scanner.scan(rootCandidate)
+        // console.log(rootEntry.errored ? 'skipped' : 'chosen', rootCandidate)
+        if (!rootEntry.errored) {
+          break
+        }
       }
-    }
 
-    if (rootEntry) {
-      const rootRelative = path.relative(this.relative, rootEntry.path)
-      if (rootRelative !== '') {
-        items.push({
-          label: putils.appendDirSuffix(
-            isAbsolute ? this.pathForDisplay(rootEntry.path) : rootRelative,
-          ),
-          buttons: this.directoryButtons(rootEntry.path),
+      if (rootEntry) {
+        const rootRelative = path.relative(this.relative, rootEntry.path)
+        if (rootRelative !== '') {
+          items.push({
+            label: putils.appendDirSuffix(
+              isAbsolute ? this.pathForDisplay(rootEntry.path) : rootRelative,
+            ),
+            buttons: this.directoryButtons(rootEntry.path),
+          })
+        }
+
+        // Generate list of items from scan results
+        this.scanner.forEach(rootEntry, (subpath, isDir) => {
+          items.push({
+            label:
+              (isAbsolute
+                ? this.pathForDisplay(subpath)
+                : path.relative(this.relative, subpath)) +
+              (isDir ? path.sep : ''),
+            buttons: isDir ? this.directoryButtons(subpath) : FILE_BUTTONS,
+          })
         })
       }
 
-      this.scanner.forEach(rootEntry, (subpath, isDir) => {
-        items.push({
-          label:
-            (isAbsolute
-              ? this.pathForDisplay(subpath)
-              : path.relative(this.relative, subpath)) +
-            (isDir ? path.sep : ''),
-          buttons: isDir ? this.directoryButtons(subpath) : FILE_BUTTONS,
-        })
-      })
-    }
-
-    // Control inclusion of ~/ item in the list
-    const homeLabel = this.homePrefix + path.sep
-    if (input === this.homePrefix || input === homeLabel) {
-      items.push({ label: homeLabel, alwaysShow: true })
-    }
-
-    const updateDuration = Date.now() - updateStart
-    console.log(`Generated ${items.length} items in ${updateDuration}ms`)
-    this.qp.items = items
+      const updateDuration = Date.now() - updateStart
+      console.log(`Generated ${items.length} items in ${updateDuration}ms`)
+      this.qp.items = items
     } catch (error: any) {
       this.qp.items = [{
         label: 'Error occurred',
@@ -147,7 +153,7 @@ export class QuickOpener {
     }
   }
 
-  /** Handles quick pick accept events */
+  /** Handle quick pick accept events */
   async onAccept() {
     const input = this.qp.value
     const selected = this.qp.selectedItems[0]
@@ -164,7 +170,7 @@ export class QuickOpener {
       .then((x) => x.isDirectory())
       .catch(() => false)
 
-    console.log('accept', { input, inputResolved: labelResolved, label, isDir })
+    // console.log('accept', { input, inputResolved: labelResolved, label, isDir })
 
     if (isDir) {
       if (
@@ -202,14 +208,14 @@ export class QuickOpener {
         if (!exists) {
           await fs.mkdir(createFile ? path.dirname(target) : target, { recursive: true })
           if (createFile) {
-          await fs.appendFile(target, '')
-        }
+            await fs.appendFile(target, '')
+          }
         }
         if (createFile) {
-        vscode.workspace
-          .openTextDocument(vscode.Uri.file(target))
-          .then(vscode.window.showTextDocument)
-        this.qp.dispose()
+          vscode.workspace
+            .openTextDocument(vscode.Uri.file(target))
+            .then(vscode.window.showTextDocument)
+          this.qp.dispose()
         } else {
           this.updateRelative(target)
         }
