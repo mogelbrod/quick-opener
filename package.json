@@ -81,6 +81,7 @@
     ]
   },
   "scripts": {
+    "clean": "rimraf dist quickopener-*.vsix .vscode-test",
     "vscode:prepublish": "npm run package",
     "compile": "webpack",
     "watch": "webpack --watch",
@@ -107,6 +108,7 @@
     "glob": "^8.0.3",
     "mocha": "^10.0.0",
     "prettier": "^2.7.1",
+    "rimraf": "^3.0.2",
     "semantic-release": "^19.0.5",
     "semantic-release-vsce": "^5.2.0",
     "ts-loader": "^9.4.1",

@@ -45,7 +45,9 @@ module.exports = {
     ['@semantic-release/release-notes-generator', common],
     '@semantic-release/changelog',
     ['semantic-release-vsce', { packageVsix: true }],
-    // '@semantic-release/git',
-    ['@semantic-release/github', { assets: [{ path: '*.vsix', label: 'Packaged extension' }] }],
+    '@semantic-release/git',
+    ['@semantic-release/github', {
+      assets: [{ path: 'quickopener-{nextRelease.name}.vsix', label: 'Packaged extension (quickopener-{nextRelease.name}.vsix)' }],
+    }],
   ]
 }
