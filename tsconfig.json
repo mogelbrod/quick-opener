@@ -8,6 +8,7 @@
     "sourceMap": true,
     "rootDir": "src",
     "strict": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true
   }
 }
