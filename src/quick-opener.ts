@@ -72,19 +72,12 @@ export class QuickOpener {
 
       const inputParsed = path.parse(input)
       const inputAbsolute = this.resolveRelative(input)
+      const inputIsDot = putils.isDot(input)
       const inputHasDirSuffix = putils.hasDirSuffix(input)
       const isAncestor = input.startsWith('..')
-      const isAbsolute =
-        inputParsed.root !== '' || input.startsWith(this.homePrefix)
-      const baseName = path.basename(input)
-      const baseNameIsDot = putils.isDot(baseName)
-      const rootPath = isAbsolute
-        ? this.resolveRelative(input)
-        : isAncestor
-          ? path.resolve(this.relative, input)
-          : this.relative
+      const isAbsolute = inputParsed.root !== '' || input.startsWith(this.homePrefix)
 
-      // console.log({ relative: this.relative, input, rootPath, isAbsolute, isAncestor })
+      // console.log({ relative: this.relative, input, isAbsolute })
 
       // Immediately include ../ entry if not at root for quick navigation
       if (isAncestor && path.parse(this.relative).dir) {
@@ -98,17 +91,20 @@ export class QuickOpener {
       // This shouldn't block list generation
       const windowButtonsPromise = this.scanner.isDirectory(inputAbsolute).then(isDir => {
         this.qp.buttons = isDir
-        ? this.directoryButtons(inputAbsolute)
-        : baseName && !baseNameIsDot
-          ? [inputHasDirSuffix ? BUTTONS.createDirectory : BUTTONS.createFile]
-          : []
+          ? this.directoryButtons(inputAbsolute)
+          : inputParsed.name && !inputIsDot
+            ? [inputHasDirSuffix ? BUTTONS.createDirectory : BUTTONS.createFile]
+            : []
       })
 
       // After this point the function latency may be noticeable
       const items: vscode.QuickPickItem[] = []
 
-      let rootEntry: ScanEntry | undefined = undefined
-      const rootParts = rootPath.split(path.sep)
+      let rootEntry: ScanEntry | undefined
+      const rootDir = input.length && !inputHasDirSuffix && !isAncestor && !inputIsDot
+        ? path.dirname(inputAbsolute)
+        : inputAbsolute
+      const rootParts = rootDir.split(path.sep)
 
       for (let i = rootParts.length; i > 0; i--) {
         const rootCandidate = rootParts.slice(0, i).join(path.sep)
@@ -141,6 +137,8 @@ export class QuickOpener {
             buttons: isDir ? this.directoryButtons(subpath) : FILE_BUTTONS,
           })
         })
+      } else {
+        console.warn('no root resolved from', inputAbsolute)
       }
 
       const updateDuration = Date.now() - updateStart
