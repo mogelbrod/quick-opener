@@ -71,7 +71,7 @@ export class QuickOpener {
       const updateStart = Date.now()
 
       const inputParsed = path.parse(input)
-      const inputAbsolute = path.resolve(this.relative, input)
+      const inputAbsolute = this.resolveRelative(input)
       const inputHasDirSuffix = putils.hasDirSuffix(input)
       const isAncestor = input.startsWith('..')
       const isAbsolute =
@@ -94,14 +94,15 @@ export class QuickOpener {
         }]
       }
 
-      const inputIsDirectory = await this.scanner.isDirectory(inputAbsolute)
-
       // Determine which buttons to show in quick pick titlebar
-      this.qp.buttons = inputIsDirectory
+      // This shouldn't block list generation
+      const windowButtonsPromise = this.scanner.isDirectory(inputAbsolute).then(isDir => {
+        this.qp.buttons = isDir
         ? this.directoryButtons(inputAbsolute)
         : baseName && !baseNameIsDot
           ? [inputHasDirSuffix ? BUTTONS.createDirectory : BUTTONS.createFile]
           : []
+      })
 
       // After this point the function latency may be noticeable
       const items: vscode.QuickPickItem[] = []
@@ -145,6 +146,9 @@ export class QuickOpener {
       const updateDuration = Date.now() - updateStart
       console.log(`Generated ${items.length} items in ${updateDuration}ms`)
       this.qp.items = items
+
+      // Wait for window buttons to be generated until we're considered done
+      await windowButtonsPromise
     } catch (error: any) {
       this.qp.items = [{
         label: 'Error occurred',

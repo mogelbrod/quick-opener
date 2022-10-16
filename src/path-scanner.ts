@@ -56,13 +56,14 @@ export class PathScanner {
     // console.log('scan', root)
     const timestamp = Date.now()
 
-    const rootEntry = this.getEntry(root) || { path: root, timestamp }
+    const rootEntry = this.getEntry(root, true)
     if (rootEntry.worker) {
       return rootEntry.worker
     }
 
-    // Reset directory contents in preparation for scan
+    // Reset entry in preparation for scan
     Object.assign(rootEntry, {
+      timestamp,
       dirs: [],
       files: [],
     })
@@ -140,11 +141,17 @@ export class PathScanner {
     return result
   }
 
-  public getEntry(pth: string): ScanEntry | undefined {
+  public getEntry(pth: string, createIfMissing: true): ScanEntry
+  public getEntry(pth: string, createIfMissing?: false): ScanEntry
+  public getEntry(pth: string, createIfMissing = false) {
     pth = this.normalizePath(pth)
-    const entry = this.dirs.get(pth)
+    let entry = this.dirs.get(pth)
     if (entry && entry.timestamp + this.dirTTL > Date.now()) {
       entry.worker = undefined
+    }
+    if (!entry && createIfMissing) {
+      entry = { path: pth, timestamp: Date.now() }
+      this.dirs.set(pth, entry)
     }
     return entry
   }
@@ -153,17 +160,17 @@ export class PathScanner {
   async isDirectory(pth: string): Promise<boolean> {
     pth = this.normalizePath(pth)
     const entry = this.getEntry(pth)
-    // Only valid directories are stored as entries
-    if (entry && !entry.errored) {
-      return true
-    }
+    let isDir = !!entry
     // Check if the path points to a directory
     // If so store it as an unscanned entry to enable later lookups
-    const isDir = await stat(pth)
-      .then((x) => x.isDirectory())
-      .catch(() => false)
-    if (isDir) {
-      this.dirs.set(pth, { path: pth, timestamp: Date.now() })
+    if (!isDir) {
+      isDir = await stat(pth)
+        .then((x) => x.isDirectory())
+        .catch(() => false)
+      if (isDir) {
+        // Create entry if it hasn't been created during the async stat call
+        this.getEntry(pth, true)
+      }
     }
     return isDir
   }
