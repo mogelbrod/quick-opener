@@ -31,6 +31,9 @@ export class PathScanner {
   /** Directory scan cache for this instance */
   public readonly dirs = new Map<string, ScanEntry>()
 
+  /** Maximum number of items to include in entry enumeration */
+  public maxCandidates: number
+
   /** Maximum time (in ms) for scanner to run between input and showing results */
   public timeout: number
 
@@ -42,10 +45,12 @@ export class PathScanner {
 
   constructor({
     exclude = DEFAULT_EXCLUDES as string[],
+    maxCandidates = 0,
     timeout = 100,
     dirTTL = 30e3,
   } = {}) {
     this.exclude = new Set(exclude)
+    this.maxCandidates = maxCandidates
     this.timeout = timeout
     this.dirTTL = dirTTL
   }
@@ -53,7 +58,6 @@ export class PathScanner {
   async scan(root: string, maxTime = this.timeout): ScanWorker {
     root = this.normalizePath(root)
 
-    // console.log('scan', root)
     const timestamp = Date.now()
 
     const rootEntry = this.getEntry(root, true)
@@ -114,20 +118,26 @@ export class PathScanner {
   ) {
     const queue = [root && typeof root === 'object' ? root.path : root]
     const result: string[] = []
+    let length = 0
 
     const dirCallback = (pth: string) => callback(pth, true)
     const fileCallback = (pth: string) => callback(pth, false)
 
-    while (queue.length) {
+    while (queue.length && (!this.maxCandidates || length < this.maxCandidates)) {
       const entry = this.getEntry(queue.pop() as string)
       if (!entry) {
         continue
       }
-      if (entry.dirs?.length) {
+      let arrayLength: number | undefined
+      if (arrayLength = entry.dirs?.length) {
+        length += arrayLength
         queue.push(...entry.dirs)
         entry.dirs.forEach(dirCallback)
       }
-      entry.files?.forEach(fileCallback)
+      if (arrayLength = entry.files?.length) {
+        length += arrayLength
+        entry.files.forEach(fileCallback)
+      }
     }
 
     return result

@@ -8,11 +8,13 @@ import * as putils from './path-utils'
 export class QuickOpener {
   /** Quick pick instance */
   public readonly qp = vscode.window.createQuickPick()
+
   /** Scanner instance */
   public readonly scanner: PathScanner
 
   /** Current relative path - can be changed by user throughout the pick session */
   private relative: string
+
   /** Current vscode workspace paths */
   private workspacePaths: Set<string>
 

@@ -15,6 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
       ),
       scanner: new PathScanner({
         exclude: config.get('exclude') as string[],
+        maxCandidates: config.get('maxCandidates') as number,
         timeout: config.get('timeout') as number,
         dirTTL: 30e3,
       }),

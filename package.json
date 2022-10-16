@@ -49,10 +49,16 @@
           }
         },
         "quickOpener.timeout": {
-          "description": "Maximum time (in ms) for scanner to run between input and showing results.",
+          "description": "Maximum time (in ms) for scanner to run between input and showing results. Set to 0 to disable recursive search.",
           "type": "number",
           "default": 200,
           "minimum": 0
+        },
+        "quickOpener.maxCandidates": {
+          "description": "Maximum number of paths to include in the list VS Code fuzzy matches against. Lower values improve UI responsiveness at the risk of fewer nested directories being included in the list.",
+          "type": "number",
+          "default": 10000,
+          "minimum": 100
         }
       }
     },

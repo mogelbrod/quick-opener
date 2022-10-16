@@ -11,7 +11,7 @@ A plugin that makes it easy to open files outside the VS Code workspace
 ## Features
 
 - Show the Quick Opener picker by pressing <kbd>Ctrl</kbd>-<kbd>O</kbd> (Mac: <kbd>⌘</kbd>-<kbd>O</kbd>)
-- Open any path across the file system using only the keyboard (no more native file system popups)
+- Open any path across the file system using only the keyboard (no more pesky native file system popups!)
 - Fuzzy path matching using the built-in VS Code fuzzy matcher
 - Starts in directory of current file (if open) to make relative navigation quick and easy
 - Begin entering any absolute path (or `~/`) to quickly locate files outside the current workspace
@@ -34,8 +34,12 @@ A plugin that makes it easy to open files outside the VS Code workspace
 - `quickOpener.exclude`: List of directory/file names to exclude from the results.
   Compared against the name of each path component.<br>
   _Default value:_ `["node_modules", ".git", ".DS_Store"]`
-- `quickOpener.timeout`: Maximum time (in ms) for scanner to run between input and showing results.<br>
+- `quickOpener.timeout`: Maximum time (in ms) for scanner to run between input and showing results.
+  Set to 0 to disable recursive search.<br>
   _Default value:_ `200`
+- `quickOpener.maxCandidates`: Maximum number of paths to include in the list VS Code fuzzy matches against.
+  Lower values improve UI responsiveness at the risk of fewer nested directories being included in the list.<br>
+  _Default value:_ `10000`
 
 ## Customize key binding
 
