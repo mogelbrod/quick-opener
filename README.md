@@ -23,6 +23,14 @@ A plugin that makes it easy to open files outside the VS Code workspace
   - Open directory in new VS Code window
   - Add/remove directories to/from the current workspace
 
+## Installation
+
+1. Navigate to the Quick Opener extension page within VS Code by either:
+   * Visiting [marketplace.visualstudio.com/items?itemName=mogelbrod.quickopener](https://marketplace.visualstudio.com/items?itemName=mogelbrod.quickopener)
+     and pressing the _Install_ button (this should open VS Code)
+   * Searching for `mogelbrod.quickopener` from the VS Code _Extensions_ sidebar
+2. Press the corresponding _Install_ button
+
 ## Extension contributions
 
 ### Commands
