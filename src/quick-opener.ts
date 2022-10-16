@@ -254,11 +254,11 @@ export class QuickOpener {
       case BUTTONS.workspaceAdd: {
         this.qp.dispose()
         const existing = vscode.workspace.workspaceFolders
-        vscode.workspace.updateWorkspaceFolders(
-          existing !== undefined ? existing.length : 0,
-          null,
-          { uri },
-        )
+        if (existing?.length) {
+          vscode.workspace.updateWorkspaceFolders(existing.length, null, { uri })
+        } else {
+          await vscode.commands.executeCommand('vscode.openFolder', uri)
+        }
         this.updateWorkspacePaths()
         return
       }
