@@ -1,3 +1,10 @@
+## [0.2.1](https://github.com/mogelbrod/quick-opener/compare/v0.2.0...v0.2.1) (2022-10-19)
+
+
+### Bug Fixes
+
+* Drop platform specific path separator from default fallbackDirectory value ([54afad9](https://github.com/mogelbrod/quick-opener/commit/54afad9e9d05f628f52d53e6c13253c274fcf46f))
+
 ## [0.2.0](https://github.com/mogelbrod/quick-opener/compare/v0.1.0...v0.2.0) (2022-10-19)
 
 
