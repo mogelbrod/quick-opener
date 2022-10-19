@@ -166,23 +166,18 @@ export class QuickOpener {
       return
     }
 
-    const label = selected.label
-    const labelResolved = this.resolveRelative(label)
+    const { label } = selected
+    const target = this.resolveRelative(label)
+    const stat = await fs.stat(target).catch(() => null)
+    const uri = vscode.Uri.file(target)
 
-    const isDir = await fs
-      .stat(labelResolved)
-      .then((x) => x.isDirectory())
-      .catch(() => false)
-
-    // console.log('accept', { input, inputResolved: labelResolved, label, isDir })
-
-    if (isDir) {
+    if (stat?.isDirectory()) {
       if (
         label === input ||
         // Immediately change directory if input points to ancestor for the sake of convenience
         (input === '..' && label === putils.appendDirSuffix(input))
       ) {
-        this.updateRelative(labelResolved)
+        this.updateRelative(target)
         return
       }
 
@@ -190,9 +185,7 @@ export class QuickOpener {
       return
     }
 
-    vscode.workspace
-      .openTextDocument(vscode.Uri.file(labelResolved))
-      .then(vscode.window.showTextDocument)
+    vscode.workspace.openTextDocument(uri).then(vscode.window.showTextDocument)
 
     this.qp.dispose()
   }
@@ -200,16 +193,16 @@ export class QuickOpener {
   /** Handle quick pick button and item button events */
   async onAction(value: string, button: vscode.QuickInputButton) {
     const target = this.resolveRelative(value)
+    const stat = await fs.stat(target).catch(() => null)
     const uri = vscode.Uri.file(target)
+
+    debugger
 
     switch (button) {
       case BUTTONS.createDirectory:
       case BUTTONS.createFile: {
         const createFile = button === BUTTONS.createFile
-        const exists = await fs.stat(target)
-          .then(() => true)
-          .catch(() => false)
-        if (!exists) {
+        if (!stat) {
           await fs.mkdir(createFile ? path.dirname(target) : target, { recursive: true })
           if (createFile) {
             await fs.appendFile(target, '')
