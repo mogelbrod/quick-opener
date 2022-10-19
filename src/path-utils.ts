@@ -15,3 +15,7 @@ export function appendDirSuffix(pth: string) {
 export function trimDirSuffix(pth: string) {
   return hasDirSuffix(pth) ? pth.slice(0, -1) : pth
 }
+
+export function isWorkspaceFile(pth: string) {
+  return path.extname(pth) === '.code-workspace'
+}

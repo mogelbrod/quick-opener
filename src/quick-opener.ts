@@ -22,10 +22,7 @@ export class QuickOpener {
   private readonly homePath = os.homedir()
   private readonly homePrefix = '~'
 
-  constructor(options: {
-    initial?: string
-    scanner?: PathScanner
-  }) {
+  constructor(options: { initial?: string; scanner?: PathScanner }) {
     this.updateRelative(options.initial ?? this.homePath, false)
     this.updateWorkspacePaths()
 
@@ -77,35 +74,41 @@ export class QuickOpener {
       const inputIsDot = putils.isDot(input)
       const inputHasDirSuffix = putils.hasDirSuffix(input)
       const isAncestor = input.startsWith('..')
-      const isAbsolute = inputParsed.root !== '' || input.startsWith(this.homePrefix)
+      const isAbsolute =
+        inputParsed.root !== '' || input.startsWith(this.homePrefix)
 
       // console.log({ relative: this.relative, input, isAbsolute })
 
       // Immediately include ../ entry if not at root for quick navigation
       if (isAncestor && path.parse(this.relative).dir) {
-        this.qp.items = [{
-          label: putils.appendDirSuffix('..'),
-          buttons: this.directoryButtons(path.resolve(this.relative, '..')),
-        }]
+        this.qp.items = [
+          {
+            label: putils.appendDirSuffix('..'),
+            buttons: this.directoryButtons(path.resolve(this.relative, '..')),
+          },
+        ]
       }
 
       // Determine which buttons to show in quick pick titlebar
       // This shouldn't block list generation
-      const windowButtonsPromise = this.scanner.isDirectory(inputAbsolute).then(isDir => {
-        this.qp.buttons = isDir
-          ? this.directoryButtons(inputAbsolute)
-          : inputParsed.name && !inputIsDot
-            ? [inputHasDirSuffix ? BUTTONS.createDirectory : BUTTONS.createFile]
-            : []
-      })
+      const windowButtonsPromise = this.scanner
+        .isDirectory(inputAbsolute)
+        .then((isDir) => {
+          this.qp.buttons = isDir
+            ? this.directoryButtons(inputAbsolute)
+            : inputParsed.name && !inputIsDot
+              ? [inputHasDirSuffix ? BUTTONS.createDirectory : BUTTONS.createFile]
+              : []
+        })
 
       // After this point the function latency may be noticeable
       const items: vscode.QuickPickItem[] = []
 
       let rootEntry: ScanEntry | undefined
-      const rootDir = input.length && !inputHasDirSuffix && !isAncestor && !inputIsDot
-        ? path.dirname(inputAbsolute)
-        : inputAbsolute
+      const rootDir =
+        input.length && !inputHasDirSuffix && !isAncestor && !inputIsDot
+          ? path.dirname(inputAbsolute)
+          : inputAbsolute
       const rootParts = rootDir.split(path.sep)
 
       for (let i = rootParts.length; i > 0; i--) {
@@ -136,7 +139,11 @@ export class QuickOpener {
                 ? this.pathForDisplay(subpath)
                 : path.relative(this.relative, subpath)) +
               (isDir ? path.sep : ''),
-            buttons: isDir ? this.directoryButtons(subpath) : FILE_BUTTONS,
+            buttons: isDir
+              ? this.directoryButtons(subpath)
+              : putils.isWorkspaceFile(subpath)
+                ? [BUTTONS.workspaceOpen, BUTTONS.openSplit]
+                : [BUTTONS.openSplit],
           })
         })
       } else {
@@ -150,10 +157,12 @@ export class QuickOpener {
       // Wait for window buttons to be generated until we're considered done
       await windowButtonsPromise
     } catch (error: any) {
-      this.qp.items = [{
-        label: 'Error occurred',
-        detail: error.message,
-      }]
+      this.qp.items = [
+        {
+          label: 'Error occurred',
+          detail: error.message,
+        },
+      ]
     }
   }
 
@@ -196,14 +205,14 @@ export class QuickOpener {
     const stat = await fs.stat(target).catch(() => null)
     const uri = vscode.Uri.file(target)
 
-    debugger
-
     switch (button) {
       case BUTTONS.createDirectory:
       case BUTTONS.createFile: {
         const createFile = button === BUTTONS.createFile
         if (!stat) {
-          await fs.mkdir(createFile ? path.dirname(target) : target, { recursive: true })
+          await fs.mkdir(createFile ? path.dirname(target) : target, {
+            recursive: true,
+          })
           if (createFile) {
             await fs.appendFile(target, '')
           }
@@ -225,13 +234,11 @@ export class QuickOpener {
       }
 
       case BUTTONS.openSplit: {
-        vscode.workspace
-          .openTextDocument(vscode.Uri.file(target))
-          .then((doc) =>
-            vscode.window.showTextDocument(doc, {
-              viewColumn: vscode.ViewColumn.Beside,
-            }),
-          )
+        vscode.workspace.openTextDocument(vscode.Uri.file(target)).then((doc) =>
+          vscode.window.showTextDocument(doc, {
+            viewColumn: vscode.ViewColumn.Beside,
+          }),
+        )
         this.qp.dispose()
         return
       }
@@ -244,11 +251,14 @@ export class QuickOpener {
         return
       }
 
+      case BUTTONS.workspaceOpen:
       case BUTTONS.workspaceAdd: {
         this.qp.dispose()
         const existing = vscode.workspace.workspaceFolders
-        if (existing?.length) {
-          vscode.workspace.updateWorkspaceFolders(existing.length, null, { uri })
+        if (button === BUTTONS.workspaceAdd && existing?.length) {
+          vscode.workspace.updateWorkspaceFolders(existing.length, null, {
+            uri,
+          })
         } else {
           await vscode.commands.executeCommand('vscode.openFolder', uri)
         }
@@ -323,6 +333,10 @@ const BUTTONS: Readonly<Record<string, vscode.QuickInputButton>> = {
     tooltip: 'Open to the side',
     iconPath: new vscode.ThemeIcon('split-horizontal'),
   },
+  workspaceOpen: {
+    tooltip: 'Open workspace',
+    iconPath: new vscode.ThemeIcon('root-folder'),
+  },
   workspaceAdd: {
     tooltip: 'Add to workspace',
     iconPath: new vscode.ThemeIcon('root-folder-opened'),
@@ -332,8 +346,3 @@ const BUTTONS: Readonly<Record<string, vscode.QuickInputButton>> = {
     iconPath: new vscode.ThemeIcon('close'),
   },
 } as const
-
-/** Buttons are displayed in reverse order compared to qp.buttons */
-const FILE_BUTTONS: vscode.QuickPickItem['buttons'] = [
-  BUTTONS.openSplit,
-] as const
