@@ -32,6 +32,8 @@ const common = {
   },
 }
 
+const vsixName = 'quickopener.vsix'
+
 module.exports = {
   branches: [
     '+([0-9])?(.{+([0-9]),x}).x',
@@ -44,10 +46,10 @@ module.exports = {
     ['@semantic-release/commit-analyzer', common],
     ['@semantic-release/release-notes-generator', common],
     '@semantic-release/changelog',
-    ['semantic-release-vsce', { packageVsix: true }],
+    ['semantic-release-vsce', { packageVsix: vsixName }],
     '@semantic-release/git',
     ['@semantic-release/github', {
-      assets: [{ path: 'quickopener-{nextRelease.name}.vsix', label: 'Packaged extension (quickopener-{nextRelease.name}.vsix)' }],
+      assets: [{ path: vsixName, label: 'Packaged extension (quickopener-{nextRelease.version}.vsix)' }],
     }],
   ]
 }
