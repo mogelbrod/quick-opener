@@ -49,7 +49,7 @@ module.exports = {
     ['semantic-release-vsce', { packageVsix: vsixName }],
     '@semantic-release/git',
     ['@semantic-release/github', {
-      assets: [{ path: vsixName, label: 'Packaged extension (quickopener-{nextRelease.version}.vsix)' }],
+      assets: [{ path: vsixName, label: `Packaged extension (${vsixName})` }],
     }],
   ]
 }
