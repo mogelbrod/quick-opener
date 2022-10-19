@@ -12,6 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
       initial: (activeFileName
         ? path.dirname(activeFileName)
         : vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+          ?? config.get('fallbackDirectory') as string
       ),
       scanner: new PathScanner({
         exclude: config.get('exclude') as string[],

@@ -23,7 +23,7 @@ export class QuickOpener {
   private readonly homePrefix = '~'
 
   constructor(options: { initial?: string; scanner?: PathScanner }) {
-    this.updateRelative(options.initial ?? this.homePath, false)
+    this.updateRelative(options.initial || this.homePath, false)
     this.updateWorkspacePaths()
 
     this.scanner = options.scanner ?? new PathScanner()
@@ -47,7 +47,7 @@ export class QuickOpener {
 
   /** Change current relative path */
   updateRelative(absolutePath: string, updateItems = true) {
-    this.relative = absolutePath
+    this.relative = putils.appendDirSuffix(this.resolveRelative(absolutePath))
     this.qp.title = this.pathForDisplay(this.relative!, true)
     this.qp.value = ''
     if (updateItems) {

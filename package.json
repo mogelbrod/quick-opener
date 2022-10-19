@@ -40,6 +40,11 @@
     "configuration": {
       "title": "Quick Opener",
       "properties": {
+        "quickOpener.fallbackDirectory": {
+          "description": "Directory to start in when there's no directory/file open in the editor",
+          "type": "string",
+          "default": "~/"
+        },
         "quickOpener.exclude": {
           "description": "List of directory/file names to exclude from the results. Compared against the name of each path component.",
           "type": "array",

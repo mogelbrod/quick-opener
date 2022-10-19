@@ -39,6 +39,8 @@ A plugin that makes it easy to open files outside the VS Code workspace
 
 ### Settings
 
+- `quickOpener.fallbackDirectory`: Directory to start in when there's no directory/file open in the editor.<br>
+  _Default value:_ `"~/"`
 - `quickOpener.exclude`: List of directory/file names to exclude from the results.
   Compared against the name of each path component.<br>
   _Default value:_ `["node_modules", ".git", ".DS_Store"]`
