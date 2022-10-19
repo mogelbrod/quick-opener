@@ -1,3 +1,16 @@
+## [0.2.0](https://github.com/mogelbrod/quick-opener/compare/v0.1.0...v0.2.0) (2022-10-19)
+
+
+### Features
+
+* Allow fallback starting directory to be customized using `quickOpener.fallbackDirectory` ([e6ed2b6](https://github.com/mogelbrod/quick-opener/commit/e6ed2b63e515a5c21810ed4a68c1bfc03f6eef97))
+* Show "open workspace" item button for `*.code-workspace` files ([f2db318](https://github.com/mogelbrod/quick-opener/commit/f2db31895f2aff77b30b91a941d535b233581046))
+
+
+### Code Refactoring
+
+* **QuickOpener:** Make `stat` object available in action/accept handlers ([49710c8](https://github.com/mogelbrod/quick-opener/commit/49710c815eaff136e4b29d73f0da784c1eaea1cc))
+
 ## [0.1.0](https://github.com/mogelbrod/quick-opener/compare/v0.0.1...v0.1.0) (2022-10-16)
 
 
