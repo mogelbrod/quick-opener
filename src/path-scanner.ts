@@ -26,22 +26,22 @@ export const DEFAULT_EXCLUDES: readonly string[] = ['node_modules', '.git', '.DS
 
 export class PathScanner {
   /** List of directory/file names to exclude from result lists. */
-  public exclude: Set<string>
+  exclude: Set<string>
 
   /** Directory scan cache for this instance */
-  public readonly dirs = new Map<string, ScanEntry>()
+  readonly dirs = new Map<string, ScanEntry>()
 
   /** Maximum number of items to include in entry enumeration */
-  public maxCandidates: number
+  maxCandidates: number
 
   /** Maximum time (in ms) for scanner to run between input and showing results */
-  public timeout: number
+  timeout: number
 
   /**
    * Maximum time for a scan entry to be considered fresh, after which any
    * subsequent accesses will trigger a new scan.
    */
-  public dirTTL: number
+  dirTTL: number
 
   constructor({
     exclude = DEFAULT_EXCLUDES as string[],
@@ -112,7 +112,7 @@ export class PathScanner {
       }))
   }
 
-  public forEach(
+  forEach(
     root: string | ScanEntry,
     callback: (pth: string, isDir: boolean) => void,
   ) {
@@ -143,7 +143,7 @@ export class PathScanner {
     return result
   }
 
-  public toArray(root: string | ScanEntry): string[] {
+  toArray(root: string | ScanEntry): string[] {
     const result: string[] = []
     this.forEach(root, (pth, isDir) => {
       result.push(isDir ? pth + path.sep : pth)

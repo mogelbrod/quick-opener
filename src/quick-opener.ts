@@ -7,7 +7,7 @@ import * as putils from './path-utils'
 
 export class QuickOpener {
   /** Quick pick instance */
-  public readonly qp = vscode.window.createQuickPick()
+  readonly qp = vscode.window.createQuickPick()
 
   /** Scanner instance */
   readonly scanner: PathScanner
