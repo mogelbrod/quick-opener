@@ -10,7 +10,10 @@ export class QuickOpener {
   public readonly qp = vscode.window.createQuickPick()
 
   /** Scanner instance */
-  public readonly scanner: PathScanner
+  readonly scanner: PathScanner
+
+  /** Callback triggered when opener is disposed */
+  private onDispose?: () => void
 
   /** Current relative path - can be changed by user throughout the pick session */
   private relative: string
@@ -22,13 +25,22 @@ export class QuickOpener {
   private readonly homePath = os.homedir()
   private readonly homePrefix = '~'
 
-  constructor(options: { initial?: string; scanner?: PathScanner }) {
+  constructor(options: {
+    /** Starting directory */
+    initial?: string,
+    /** Scanner instance */
+    scanner?: PathScanner,
+    /** Callback triggered when opener is disposed */
+    onDispose?: () => void,
+  }) {
     this.updateRelative(options.initial || this.homePath, false)
     this.updateWorkspacePaths()
+    this.onDispose = options.onDispose
 
     this.scanner = options.scanner ?? new PathScanner()
 
     this.qp.placeholder = 'Enter a relative or absolute path to open…'
+    this.qp.onDidHide(this.dispose.bind(this))
     this.qp.onDidChangeValue(this.updateItems.bind(this))
     this.qp.onDidAccept(this.onAccept.bind(this))
     this.qp.onDidTriggerButton((button) => {
@@ -40,9 +52,49 @@ export class QuickOpener {
   }
 
   /** Show the quick picker */
-  public show() {
+  show() {
+    updateContext(true)
     this.updateItems('')
     this.qp.show()
+  }
+
+  /** Hide/discard the quick picker */
+  dispose() {
+    updateContext(false)
+    this.onDispose?.()
+    this.qp.dispose()
+  }
+
+  /** Manually trigger an action */
+  triggerAction(actionOrOffset: number | Action) {
+    const action = typeof actionOrOffset === 'number'
+      ? this.qp.buttons?.[actionOrOffset]
+      : ACTIONS[actionOrOffset]
+    if (!action) {
+      const actionStr = JSON.stringify(action)
+      throw new Error(`Quick Opener: Expected valid action as argument (got '${actionStr}')`)
+    }
+    this.onAction(this.qp.value, action)
+  }
+
+  /** Manually trigger an item action */
+  triggerItemAction(actionOrOffset: number | Action) {
+    const selected = this.qp.activeItems[0]
+    const action = typeof actionOrOffset === 'number'
+      ? selected?.buttons?.[actionOrOffset]
+      : ACTIONS[actionOrOffset]
+    if (action) {
+      this.onAction(selected.label, action)
+    }
+  }
+
+  popPath() {
+    const { value } = this.qp
+    if (value === '') {
+      this.updateRelative(path.dirname(this.relative))
+    } else {
+      this.qp.value = value.includes(path.sep) ? path.dirname(value) : ''
+    }
   }
 
   /** Change current relative path */
@@ -97,7 +149,7 @@ export class QuickOpener {
           this.qp.buttons = isDir
             ? this.directoryButtons(inputAbsolute)
             : inputParsed.name && !inputIsDot
-              ? [inputHasDirSuffix ? BUTTONS.createDirectory : BUTTONS.createFile]
+              ? [inputHasDirSuffix ? ACTIONS.createDirectory : ACTIONS.createFile]
               : []
         })
 
@@ -142,8 +194,8 @@ export class QuickOpener {
             buttons: isDir
               ? this.directoryButtons(subpath)
               : putils.isWorkspaceFile(subpath)
-                ? [BUTTONS.workspaceOpen, BUTTONS.openSplit]
-                : [BUTTONS.openSplit],
+                ? [ACTIONS.workspaceOpen, ACTIONS.openSplit]
+                : [ACTIONS.openSplit],
           })
         })
       } else {
@@ -196,7 +248,7 @@ export class QuickOpener {
 
     vscode.workspace.openTextDocument(uri).then(vscode.window.showTextDocument)
 
-    this.qp.dispose()
+    this.dispose()
   }
 
   /** Handle quick pick button and item button events */
@@ -206,56 +258,60 @@ export class QuickOpener {
     const uri = vscode.Uri.file(target)
 
     switch (button) {
-      case BUTTONS.createDirectory:
-      case BUTTONS.createFile: {
-        const createFile = button === BUTTONS.createFile
+      case ACTIONS.create:
+      case ACTIONS.createDirectory:
+      case ACTIONS.createFile: {
+        const createDir = putils.hasDirSuffix(target) || button === ACTIONS.createDirectory
         if (!stat) {
-          await fs.mkdir(createFile ? path.dirname(target) : target, {
+          // TODO: Handle error thrown when creating directory at path of existing file
+          await fs.mkdir(createDir ? target : path.dirname(target), {
             recursive: true,
           })
-          if (createFile) {
+          if (!createDir) {
             await fs.appendFile(target, '')
           }
         }
-        if (createFile) {
+        // Ensure any existing scan entry for the target is removed
+        this.scanner.flushEntry(target)
+        if (createDir) {
+          this.updateRelative(target)
+        } else {
           vscode.workspace
             .openTextDocument(vscode.Uri.file(target))
             .then(vscode.window.showTextDocument)
-          this.qp.dispose()
-        } else {
-          this.updateRelative(target)
+          this.dispose()
         }
         return
       }
 
-      case BUTTONS.change: {
+      case ACTIONS.change: {
         this.updateRelative(path.join(this.relative, target))
         return
       }
 
-      case BUTTONS.openSplit: {
+      case ACTIONS.openSplit: {
         vscode.workspace.openTextDocument(vscode.Uri.file(target)).then((doc) =>
           vscode.window.showTextDocument(doc, {
             viewColumn: vscode.ViewColumn.Beside,
           }),
         )
-        this.qp.dispose()
+        this.dispose()
         return
       }
 
-      case BUTTONS.openWindow: {
-        this.qp.dispose()
+      case ACTIONS.openWindow: {
+        this.dispose()
         await vscode.commands.executeCommand('vscode.openFolder', uri, {
           forceNewWindow: true,
         })
         return
       }
 
-      case BUTTONS.workspaceOpen:
-      case BUTTONS.workspaceAdd: {
-        this.qp.dispose()
+      case ACTIONS.workspaceOpen:
+      case ACTIONS.workspaceAdd: {
+        this.dispose()
         const existing = vscode.workspace.workspaceFolders
-        if (button === BUTTONS.workspaceAdd && existing?.length) {
+        if (button === ACTIONS.workspaceAdd && existing?.length) {
           vscode.workspace.updateWorkspaceFolders(existing.length, null, {
             uri,
           })
@@ -266,8 +322,8 @@ export class QuickOpener {
         return
       }
 
-      case BUTTONS.workspaceRemove: {
-        this.qp.dispose()
+      case ACTIONS.workspaceRemove: {
+        this.dispose()
         const targetTrim = putils.trimDirSuffix(target)
         const existing = vscode.workspace.workspaceFolders
         const existingIndex = existing?.findIndex(
@@ -304,15 +360,24 @@ export class QuickOpener {
   directoryButtons(absolutePath: string): vscode.QuickInputButton[] {
     return [
       this.workspacePaths.has(absolutePath)
-        ? BUTTONS.workspaceRemove
-        : BUTTONS.workspaceAdd,
-      BUTTONS.openWindow,
+        ? ACTIONS.workspaceRemove
+        : ACTIONS.workspaceAdd,
+      ACTIONS.openWindow,
     ]
   }
 }
 
-/** Buttons available for quick pick window/items */
-const BUTTONS: Readonly<Record<string, vscode.QuickInputButton>> = {
+/** Manages vscode context value for plugin */
+export function updateContext(enabled: boolean) {
+  vscode.commands.executeCommand('setContext', 'inQuickOpener', enabled)
+}
+
+/** Actions available for quick pick window/items */
+export const ACTIONS: Readonly<Record<string, vscode.QuickInputButton>> = {
+  create: {
+    tooltip: 'Create new file/directory using input as path',
+    iconPath: new vscode.ThemeIcon('new-file'),
+  },
   createFile: {
     tooltip: 'Create new file using input as path',
     iconPath: new vscode.ThemeIcon('new-file'),
@@ -346,3 +411,5 @@ const BUTTONS: Readonly<Record<string, vscode.QuickInputButton>> = {
     iconPath: new vscode.ThemeIcon('close'),
   },
 } as const
+
+export type Action = keyof typeof ACTIONS

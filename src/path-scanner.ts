@@ -151,9 +151,10 @@ export class PathScanner {
     return result
   }
 
-  public getEntry(pth: string, createIfMissing: true): ScanEntry
-  public getEntry(pth: string, createIfMissing?: false): ScanEntry
-  public getEntry(pth: string, createIfMissing = false) {
+  /** Retrieve a scan entry from the cache */
+  getEntry(pth: string, createIfMissing: true): ScanEntry
+  getEntry(pth: string, createIfMissing?: false): ScanEntry
+  getEntry(pth: string, createIfMissing = false) {
     pth = this.normalizePath(pth)
     let entry = this.dirs.get(pth)
     if (entry && entry.timestamp + this.dirTTL > Date.now()) {
@@ -164,6 +165,11 @@ export class PathScanner {
       this.dirs.set(pth, entry)
     }
     return entry
+  }
+
+  /** Remove a scan entry from the cache */
+  flushEntry(pth: string): boolean {
+    return this.dirs.delete(this.normalizePath(pth))
   }
 
   /** Utilize the scanner to determine if a path points to a directory */

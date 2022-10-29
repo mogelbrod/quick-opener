@@ -1,15 +1,21 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
-import { QuickOpener } from './quick-opener'
+import { QuickOpener, updateContext, Action } from './quick-opener'
 import { PathScanner } from './path-scanner'
 
-export function activate(context: vscode.ExtensionContext) {
-  const disposable = vscode.commands.registerCommand('quickOpener.show', () => {
+/** Currently visible instance of plugin */
+let instance: QuickOpener | null = null
+
+export function activate(ctx: vscode.ExtensionContext) {
+  // Initialize vscode context value
+  updateContext(false)
+
+  ctx.subscriptions.push(vscode.commands.registerCommand('quickOpener.show', () => {
     const config = vscode.workspace.getConfiguration('quickOpener')
     const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
 
     // Attempt to rewrite virtual Git `/commit~sha/...` file paths to the original path
-    const activeFileName = vscode.window.activeTextEditor?.document.fileName.replace(
+    const activeFileName = vscode.window.activeTextEditor?.document.fileName?.replace(
       new RegExp(`^${path.sep}commit~[0-9a-f]+${path.sep}`),
       (workspacePath || '') + path.sep
     )
@@ -25,12 +31,35 @@ export function activate(context: vscode.ExtensionContext) {
         timeout: config.get('timeout') as number,
         dirTTL: 30e3,
       }),
+      onDispose: () => {
+        instance = null
+      },
     })
 
-    opener.show()
-  })
+    instance.show()
+  }))
 
-  context.subscriptions.push(disposable)
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand('quickOpener.triggerAction', (
+      actionOrOffset?: number | Action
+    ) => {
+      instance?.triggerAction(actionOrOffset ?? 0)
+    })
+  )
+
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand('quickOpener.triggerItemAction', (
+      actionOrOffset?: number | Action
+    ) => {
+      instance?.triggerItemAction(actionOrOffset ?? 0)
+    })
+  )
+
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand('quickOpener.popPath', () =>
+      instance?.popPath()
+    ),
+  )
 }
 
 export function deactivate() {}

@@ -82,6 +82,39 @@
         "command": "quickOpener.show",
         "key": "ctrl+o",
         "mac": "cmd+o"
+      },
+      {
+        "when": "inQuickOpener",
+        "command": "quickOpener.popPath",
+        "key": "ctrl+up",
+        "mac": "cmd+up"
+      },
+      {
+        "when": "inQuickOpener",
+        "command": "quickOpener.popPath",
+        "key": "ctrl+u",
+        "mac": "cmd+u"
+      },
+      {
+        "when": "inQuickOpener",
+        "command": "quickOpener.triggerItemAction",
+        "args": [0],
+        "key": "ctrl+o",
+        "mac": "cmd+o"
+      },
+      {
+        "when": "inQuickOpener",
+        "command": "quickOpener.triggerItemAction",
+        "args": [1],
+        "key": "ctrl+shift+o",
+        "mac": "cmd+shift+o"
+      },
+      {
+        "when": "inQuickOpener",
+        "command": "quickOpener.triggerAction",
+        "args": ["create"],
+        "key": "ctrl+n",
+        "mac": "cmd+n"
       }
     ]
   },
