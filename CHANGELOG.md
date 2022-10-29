@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/mogelbrod/quick-opener/compare/v0.3.0...v0.3.1) (2022-10-29)
+
+
+### Bug Fixes
+
+* Don't crash on windows ([d0eca3f](https://github.com/mogelbrod/quick-opener/commit/d0eca3fa24a1abe061bfb63fa99341c7bd72f4e9))
+
 ## [0.3.0](https://github.com/mogelbrod/quick-opener/compare/v0.2.1...v0.3.0) (2022-10-29)
 
 
