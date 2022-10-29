@@ -1,3 +1,19 @@
+## [0.3.0](https://github.com/mogelbrod/quick-opener/compare/v0.2.1...v0.3.0) (2022-10-29)
+
+
+### Features
+
+* Add customizable keybindings for all defined actions + pop directory ([daaab6e](https://github.com/mogelbrod/quick-opener/commit/daaab6eae3f1fe1a9fe0e9d3c06e5a6276feeda4))
+* Attempt to locate original dir when triggered from a `/commit~{sha}/...` file path ([864f98a](https://github.com/mogelbrod/quick-opener/commit/864f98a60b704771d4e352f501aeac62f1793d15))
+
+
+### Bug Fixes
+
+* Avoid throwing if `resolveRelative()` is called with a slash-less path ([895e58d](https://github.com/mogelbrod/quick-opener/commit/895e58d4c62c148d0a035d965ba4b19fc5495103))
+* Don't use active file as starting point if it doesn't contain any slashes ([af43951](https://github.com/mogelbrod/quick-opener/commit/af43951aba7fc259310a102e47f874ba677763c4))
+* Prevent `popPath` from resulting in `.` input ([c72d77e](https://github.com/mogelbrod/quick-opener/commit/c72d77e04677e9ceec5a89c4e16da2f4a83b3288))
+* Trigger (item) action commands argument is supposed to be 1 indexed ([b435dee](https://github.com/mogelbrod/quick-opener/commit/b435deec954c27f5c9c7ec4bced1138f7ccc4827))
+
 ## [0.2.1](https://github.com/mogelbrod/quick-opener/compare/v0.2.0...v0.2.1) (2022-10-19)
 
 
