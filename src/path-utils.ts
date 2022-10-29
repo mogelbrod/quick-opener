@@ -19,3 +19,6 @@ export function trimDirSuffix(pth: string) {
 export function isWorkspaceFile(pth: string) {
   return path.extname(pth) === '.code-workspace'
 }
+
+/** path.sep usable in Regular expressions */
+export const sepRegex = path.sep === '\\' ? '\\\\' : path.sep

@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { QuickOpener, updateContext, Action } from './quick-opener'
 import { PathScanner } from './path-scanner'
+import { sepRegex } from './path-utils'
 
 /** Currently visible instance of plugin */
 let instance: QuickOpener | null = null
@@ -16,7 +17,7 @@ export function activate(ctx: vscode.ExtensionContext) {
 
     // Attempt to rewrite virtual Git `/commit~sha/...` file paths to the original path
     const activeFileName = vscode.window.activeTextEditor?.document.fileName?.replace(
-      new RegExp(`^${path.sep}commit~[0-9a-f]+${path.sep}`),
+      new RegExp(`^${sepRegex}commit~[0-9a-f]+${sepRegex}`),
       (workspacePath || '') + path.sep
     )
 
