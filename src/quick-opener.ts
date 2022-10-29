@@ -68,7 +68,7 @@ export class QuickOpener {
   /** Manually trigger an action */
   triggerAction(actionOrOffset: number | Action) {
     const action = typeof actionOrOffset === 'number'
-      ? this.qp.buttons?.[actionOrOffset]
+      ? this.qp.buttons?.[actionOrOffset - 1]
       : ACTIONS[actionOrOffset]
     if (!action) {
       const actionStr = JSON.stringify(action)
@@ -81,7 +81,7 @@ export class QuickOpener {
   triggerItemAction(actionOrOffset: number | Action) {
     const selected = this.qp.activeItems[0]
     const action = typeof actionOrOffset === 'number'
-      ? selected?.buttons?.[actionOrOffset]
+      ? selected?.buttons?.[actionOrOffset - 1]
       : ACTIONS[actionOrOffset]
     if (action) {
       this.onAction(selected.label, action)

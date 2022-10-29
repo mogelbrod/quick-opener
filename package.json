@@ -92,14 +92,14 @@
       {
         "when": "inQuickOpener",
         "command": "quickOpener.triggerItemAction",
-        "args": [0],
+        "args": 1,
         "key": "ctrl+o",
         "mac": "cmd+o"
       },
       {
         "when": "inQuickOpener",
         "command": "quickOpener.triggerItemAction",
-        "args": [1],
+        "args": 2,
         "key": "ctrl+shift+o",
         "mac": "cmd+shift+o"
       },

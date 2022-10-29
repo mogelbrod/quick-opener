@@ -72,8 +72,8 @@ Example of how to define custom key bindings:
   {
     "when": "inQuickOpener", // limit binding to when plugin is visible
     "command": "quickOpener.triggerItemAction",
-    "args": [0], // trigger first visible action for item (depends on item type)
-    "args": [1], // OR trigger second visible action for item (depends on item type)
+    "args": 1, // trigger first visible action for item (depends on item type)
+    "args": 2, // OR trigger second visible action for item (depends on item type)
     "key": "ctrl+shift+o", // windows/linux binding
     "mac": "cmd+shift+o" // mac binding (optional)
   },

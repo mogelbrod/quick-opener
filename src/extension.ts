@@ -44,7 +44,7 @@ export function activate(ctx: vscode.ExtensionContext) {
     vscode.commands.registerCommand('quickOpener.triggerAction', (
       actionOrOffset?: number | Action
     ) => {
-      instance?.triggerAction(actionOrOffset ?? 0)
+      instance?.triggerAction(actionOrOffset ?? 1)
     })
   )
 
@@ -52,7 +52,7 @@ export function activate(ctx: vscode.ExtensionContext) {
     vscode.commands.registerCommand('quickOpener.triggerItemAction', (
       actionOrOffset?: number | Action
     ) => {
-      instance?.triggerItemAction(actionOrOffset ?? 0)
+      instance?.triggerItemAction(actionOrOffset ?? 1)
     })
   )
 
