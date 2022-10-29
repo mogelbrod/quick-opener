@@ -15,10 +15,10 @@ A plugin that makes it easy to open files outside the VS Code workspace
 - Fuzzy path matching using the built-in VS Code fuzzy matcher
 - Starts in directory of current file (if open) to make relative navigation quick and easy
 - Begin entering any absolute path (or `~/`) to quickly locate files outside the current workspace
-- Supports ancestor paths such as `..` for parent directory
+- Navigate to parent directory by entering `..` or pressing <kbd>Ctrl</kbd>-<kbd>U</kbd> (Mac: <kbd>⌘</kbd>-<kbd>U</kbd>)
 - Press <kbd>Enter</kbd> while a directory is highlighted to temporarily change the relative root
-- Additional functionality available as window and item buttons (hover over each button icon to see they do):
-  - Create new files and directories at the given path (ancestor directories created in the process)
+- Additional functionality available as window, item buttons, and customizable keybindings:
+  - Create new files and directories at the given path, with ancestor directories created in the process
   - Open file in a vertical split
   - Open directory in new VS Code window
   - Add/remove directories to/from the current workspace
@@ -33,25 +33,7 @@ A plugin that makes it easy to open files outside the VS Code workspace
 
 ## Extension contributions
 
-### Commands
-
-- `quickOpener.show`: Show the Quick Opener picker.
-
-### Settings
-
-- `quickOpener.fallbackDirectory`: Directory to start in when there's no directory/file open in the editor.<br>
-  _Default value:_ `"~"`
-- `quickOpener.exclude`: List of directory/file names to exclude from the results.
-  Compared against the name of each path component.<br>
-  _Default value:_ `["node_modules", ".git", ".DS_Store"]`
-- `quickOpener.timeout`: Maximum time (in ms) for scanner to run between input and showing results.
-  Set to 0 to disable recursive search.<br>
-  _Default value:_ `200`
-- `quickOpener.maxCandidates`: Maximum number of paths to include in the list VS Code fuzzy matches against.
-  Lower values improve UI responsiveness at the risk of fewer nested directories being included in the list.<br>
-  _Default value:_ `10000`
-
-## Customize key binding
+### Key bindings
 
 The default behaviour of the plugin is to take over the standard key binding to open a file/folder:
 <kbd>Ctrl</kbd>-<kbd>O</kbd> (Mac: <kbd>⌘</kbd>-<kbd>O</kbd>).
@@ -69,6 +51,64 @@ If you wish to use another key binding you can append the following to
     "command": "quickOpener.show"
   },
 ```
+
+#### While the plugin window is visible
+
+The following bindings are enabled by default when the Quick Opener window is visible.
+
+On Mac <kbd>⌘</kbd> is used in place of <kbd>Ctrl</kbd>.
+
+- <kbd>Enter</kbd> - File: Accept selection / Directory: Change relative root directory
+- <kbd>Ctrl</kbd>-<kbd>U</kbd> - Go upwards in the path
+- <kbd>Ctrl</kbd>-<kbd>O</kbd> - Trigger first action for selected item
+- <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>O</kbd> - Trigger second action for selected item
+- <kbd>Ctrl</kbd>-<kbd>N</kbd> - Create new file (directory if input ends with a slash)
+
+#### Custom key bindings
+
+Example of how to define custom key bindings:
+
+```json
+  {
+    "when": "inQuickOpener", // limit binding to when plugin is visible
+    "command": "quickOpener.triggerItemAction",
+    "args": [0], // trigger first visible action for item (depends on item type)
+    "args": [1], // OR trigger second visible action for item (depends on item type)
+    "key": "ctrl+shift+o", // windows/linux binding
+    "mac": "cmd+shift+o" // mac binding (optional)
+  },
+  {
+    "when": "inQuickOpener",
+    "command": "quickOpener.triggerAction",
+    "args": ["create"], // create file/directory
+    "key": "ctrl+n",
+    "mac": "cmd+n"
+  }
+```
+
+### Settings
+
+- `quickOpener.fallbackDirectory`: Directory to start in when there's no directory/file open in the editor.<br>
+  _Default value:_ `"~"`
+- `quickOpener.exclude`: List of directory/file names to exclude from the results.
+  Compared against the name of each path component.<br>
+  _Default value:_ `["node_modules", ".git", ".DS_Store"]`
+- `quickOpener.timeout`: Maximum time (in ms) for scanner to run between input and showing results.
+  Set to 0 to disable recursive search.<br>
+  _Default value:_ `200`
+- `quickOpener.maxCandidates`: Maximum number of paths to include in the list VS Code fuzzy matches against.
+  Lower values improve UI responsiveness at the risk of fewer nested directories being included in the list.<br>
+  _Default value:_ `10000`
+
+### Commands
+
+- `quickOpener.show`: Show the Quick Opener picker.
+
+Commands available when the Quick Opener window is visible:
+
+- `quickOpener.popPath`: Go upwards in the path by chopping off the last part of the input (if present), or by navigating to parent directory.
+- `quickOpener.triggerAction`: Trigger an action using the current input as path.
+- `quickOpener.triggerItemAction`: Trigger an action using the currently selected item as path.
 
 ## Known Issues
 

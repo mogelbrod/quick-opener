@@ -86,12 +86,6 @@
       {
         "when": "inQuickOpener",
         "command": "quickOpener.popPath",
-        "key": "ctrl+up",
-        "mac": "cmd+up"
-      },
-      {
-        "when": "inQuickOpener",
-        "command": "quickOpener.popPath",
         "key": "ctrl+u",
         "mac": "cmd+u"
       },
