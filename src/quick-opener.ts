@@ -353,7 +353,9 @@ export class QuickOpener {
     if (parts[0] === this.homePrefix) {
       return path.join(this.homePath, ...parts.slice(1))
     }
-    return path.parse(pth).root === '' ? path.join(this.relative, pth) : pth
+    return this.relative && path.parse(pth).root === ''
+      ? path.join(this.relative, pth)
+      : pth
   }
 
   /** Generate buttons for a directory item */
