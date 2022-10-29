@@ -20,8 +20,9 @@ export function activate(ctx: vscode.ExtensionContext) {
       (workspacePath || '') + path.sep
     )
 
-    const opener = new QuickOpener({
-      initial: (activeFileName
+    instance = new QuickOpener({
+      // Only use dir of active file when it looks like a valid path
+      initial: (activeFileName?.includes(path.sep)
         ? path.dirname(activeFileName)
         : workspacePath ?? config.get('fallbackDirectory') as string
       ),
