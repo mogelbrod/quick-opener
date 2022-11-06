@@ -1,3 +1,15 @@
+## [0.4.0](https://github.com/mogelbrod/quick-opener/compare/v0.3.1...v0.4.0) (2022-11-06)
+
+
+### Features
+
+* Replace input value with selected item when Tab key is pressed ([cb421a6](https://github.com/mogelbrod/quick-opener/commit/cb421a6b909884ead7c4fdf8d336ebed9be716d8))
+
+
+### Code Refactoring
+
+* Let quick pick trigger list regeneration ([5138202](https://github.com/mogelbrod/quick-opener/commit/51382025e8d0d37d20b72f40b0015fd8f0535cb2))
+
 ## [0.3.1](https://github.com/mogelbrod/quick-opener/compare/v0.3.0...v0.3.1) (2022-10-29)
 
 
