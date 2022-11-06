@@ -33,7 +33,7 @@ export class QuickOpener {
     /** Callback triggered when opener is disposed */
     onDispose?: () => void,
   }) {
-    this.updateRelative(options.initial || this.homePath, false)
+    this.updateRelative(options.initial || this.homePath)
     this.updateWorkspacePaths()
     this.onDispose = options.onDispose
 
@@ -54,7 +54,7 @@ export class QuickOpener {
   /** Show the quick picker */
   show() {
     updateContext(true)
-    this.updateItems('')
+    this.updateItems()
     this.qp.show()
   }
 
@@ -88,6 +88,7 @@ export class QuickOpener {
     }
   }
 
+  /** Pop last segment of the input, or navigate to relative parent directory if input is empty */
   popPath() {
     const { value } = this.qp
     if (value === '') {
@@ -103,19 +104,15 @@ export class QuickOpener {
   triggerTabCompletion() {
     const selected = this.qp.activeItems[0]
     if (selected) {
-      this.updateItems(this.qp.value = selected.label)
+      this.qp.value = selected.label
     }
   }
 
   /** Change current relative path */
-  updateRelative(absolutePath: string, updateItems = true) {
+  updateRelative(absolutePath: string) {
     this.relative = putils.appendDirSuffix(this.resolveRelative(absolutePath))
     this.qp.title = this.pathForDisplay(this.relative!, true)
     this.qp.value = ''
-    if (updateItems) {
-      this.qp.items = []
-      this.updateItems(this.qp.value)
-    }
     return this.relative
   }
 
@@ -127,7 +124,8 @@ export class QuickOpener {
   }
 
   /** Update item list in response to input change */
-  async updateItems(input: string) {
+  async updateItems() {
+    const input = this.qp.value
     try {
       const updateStart = Date.now()
 
