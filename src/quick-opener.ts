@@ -99,6 +99,14 @@ export class QuickOpener {
     }
   }
 
+  /** Replace the input with the value of the active item, if any */
+  triggerTabCompletion() {
+    const selected = this.qp.activeItems[0]
+    if (selected) {
+      this.updateItems(this.qp.value = selected.label)
+    }
+  }
+
   /** Change current relative path */
   updateRelative(absolutePath: string, updateItems = true) {
     this.relative = putils.appendDirSuffix(this.resolveRelative(absolutePath))

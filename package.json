@@ -111,6 +111,11 @@
         ],
         "key": "ctrl+n",
         "mac": "cmd+n"
+      },
+      {
+        "when": "inQuickOpener && inputFocus",
+        "command": "quickOpener.triggerTabCompletion",
+        "key": "tab"
       }
     ]
   },

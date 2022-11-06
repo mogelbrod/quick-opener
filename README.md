@@ -59,6 +59,7 @@ The following bindings are enabled by default when the Quick Opener window is vi
 On Mac <kbd>⌘</kbd> is used in place of <kbd>Ctrl</kbd>.
 
 - <kbd>Enter</kbd> - File: Accept selection / Directory: Change relative root directory
+- <kbd>Tab</kbd> - Replace input value with selected item
 - <kbd>Ctrl</kbd>-<kbd>U</kbd> - Go upwards in the path
 - <kbd>Ctrl</kbd>-<kbd>O</kbd> - Trigger first action for selected item
 - <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>O</kbd> - Trigger second action for selected item

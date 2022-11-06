@@ -62,6 +62,12 @@ export function activate(ctx: vscode.ExtensionContext) {
       instance?.popPath()
     ),
   )
+
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand('quickOpener.triggerTabCompletion', () =>
+      instance?.triggerTabCompletion()
+    ),
+  )
 }
 
 export function deactivate() {}
