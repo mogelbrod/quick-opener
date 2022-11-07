@@ -1,3 +1,10 @@
+## [0.4.1](https://github.com/mogelbrod/quick-opener/compare/v0.4.0...v0.4.1) (2022-11-07)
+
+
+### Bug Fixes
+
+* **commands:** Use title case for 'show' command title ([e7c000c](https://github.com/mogelbrod/quick-opener/commit/e7c000cc5c2d9953c5ea1c479ed6cd6845b1181e))
+
 ## [0.4.0](https://github.com/mogelbrod/quick-opener/compare/v0.3.1...v0.4.0) (2022-11-06)
 
 
