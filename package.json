@@ -74,7 +74,7 @@
     "commands": [
       {
         "command": "quickOpener.show",
-        "title": "Quick open path"
+        "title": "Quick Open Path"
       }
     ],
     "keybindings": [
