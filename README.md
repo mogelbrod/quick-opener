@@ -10,18 +10,22 @@ A plugin that makes it easy to open files outside the VS Code workspace
 
 ## Features
 
-- Show the Quick Opener picker by pressing <kbd>Ctrl</kbd>-<kbd>O</kbd> (Mac: <kbd>⌘</kbd>-<kbd>O</kbd>)
+Keybindings on Mac use <kbd>⌘</kbd> in place of <kbd>Ctrl</kbd>.
+
+- Show the Quick Opener picker by pressing <kbd>Ctrl</kbd>-<kbd>O</kbd>
 - Open any path across the file system using only the keyboard (no more pesky native file system popups!)
 - Fuzzy path matching using the built-in VS Code fuzzy matcher
 - Starts in directory of current file (if open) to make relative navigation quick and easy
 - Begin entering any absolute path (or `~/`) to quickly locate files outside the current workspace
-- Navigate to parent directory by entering `..` or pressing <kbd>Ctrl</kbd>-<kbd>U</kbd> (Mac: <kbd>⌘</kbd>-<kbd>U</kbd>)
-- Press <kbd>Enter</kbd> while a directory is highlighted to temporarily change the relative root
-- Additional functionality available as window, item buttons, and customizable keybindings:
-  - Create new files and directories at the given path, with ancestor directories created in the process
-  - Open file in a vertical split
-  - Open directory in new VS Code window
-  - Add/remove directories to/from the current workspace
+- Navigate to parent directory by entering `..` or pressing <kbd>Ctrl</kbd>-<kbd>U</kbd>
+- Additional functionality available via window and item buttons, as well as keybindings:
+  - <kbd>Enter</kbd> - **File:** Open file / **Directory:** Change relative root directory
+  - <kbd>Ctrl</kbd>-<kbd>O</kbd> - **File:** Open in split / **Directory:** Add/remove directory to/from workspace
+  - <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>O</kbd> - **Directory:** Open directory in new window
+  - <kbd>Ctrl</kbd>-<kbd>U</kbd> - Cut off last part of the input path / navigate to parent directory
+  - <kbd>Ctrl</kbd>-<kbd>N</kbd> - Create new file (or directory if input ends with a slash) at the given path,
+    with ancestor directories created in the process
+  - <kbd>Tab</kbd> - Replace input value with selected item
 
 ## Installation
 
@@ -52,19 +56,6 @@ If you wish to use another key binding you can append the following to
   },
 ```
 
-#### While the plugin window is visible
-
-The following bindings are enabled by default when the Quick Opener window is visible.
-
-On Mac <kbd>⌘</kbd> is used in place of <kbd>Ctrl</kbd>.
-
-- <kbd>Enter</kbd> - File: Accept selection / Directory: Change relative root directory
-- <kbd>Tab</kbd> - Replace input value with selected item
-- <kbd>Ctrl</kbd>-<kbd>U</kbd> - Go upwards in the path
-- <kbd>Ctrl</kbd>-<kbd>O</kbd> - Trigger first action for selected item
-- <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>O</kbd> - Trigger second action for selected item
-- <kbd>Ctrl</kbd>-<kbd>N</kbd> - Create new file (directory if input ends with a slash)
-
 #### Custom key bindings
 
 Example of how to define custom key bindings:
@@ -74,16 +65,14 @@ Example of how to define custom key bindings:
     "when": "inQuickOpener", // limit binding to when plugin is visible
     "command": "quickOpener.triggerItemAction",
     "args": 1, // trigger first visible action for item (depends on item type)
-    "args": 2, // OR trigger second visible action for item (depends on item type)
-    "key": "ctrl+shift+o", // windows/linux binding
-    "mac": "cmd+shift+o" // mac binding (optional)
+    // "args": 2, // OR trigger second visible action for item (depends on item type)
+    "key": "ctrl+shift+o",
   },
   {
     "when": "inQuickOpener",
     "command": "quickOpener.triggerAction",
     "args": ["create"], // create file/directory
     "key": "ctrl+n",
-    "mac": "cmd+n"
   }
 ```
 
@@ -105,11 +94,12 @@ Example of how to define custom key bindings:
 
 - `quickOpener.show`: Show the Quick Opener picker.
 
-Commands available when the Quick Opener window is visible:
+Commands available while the plugin window is visible:
 
 - `quickOpener.popPath`: Go upwards in the path by chopping off the last part of the input (if present), or by navigating to parent directory.
 - `quickOpener.triggerAction`: Trigger an action using the current input as path.
 - `quickOpener.triggerItemAction`: Trigger an action using the currently selected item as path.
+- `quickOpener.triggerTabCompletion`: Replace the input value with the selected item path.
 
 ## Known Issues
 
