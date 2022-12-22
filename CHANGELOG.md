@@ -1,3 +1,10 @@
+## [0.4.2](https://github.com/mogelbrod/quick-opener/compare/v0.4.1...v0.4.2) (2022-12-22)
+
+
+### Bug Fixes
+
+* Resolve original file path for commit~* files in multi-folder workspaces ([7bc7168](https://github.com/mogelbrod/quick-opener/commit/7bc7168a354b9557170a3508082d991b41d24e6d))
+
 ## [0.4.1](https://github.com/mogelbrod/quick-opener/compare/v0.4.0...v0.4.1) (2022-11-07)
 
 
