@@ -14,11 +14,23 @@ export function activate(ctx: vscode.ExtensionContext) {
   ctx.subscriptions.push(vscode.commands.registerCommand('quickOpener.show', () => {
     const config = vscode.workspace.getConfiguration('quickOpener')
     const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+    const document = vscode.window.activeTextEditor?.document
 
     // Attempt to rewrite virtual Git `/commit~sha/...` file paths to the original path
-    const activeFileName = vscode.window.activeTextEditor?.document.fileName?.replace(
+    const activeFileName = document?.fileName?.replace(
       new RegExp(`^${sepRegex}commit~[0-9a-f]+${sepRegex}`),
-      (workspacePath || '') + path.sep
+      () => {
+        let root = (workspacePath || '')
+        try {
+          const query = JSON.parse(document.uri.query)
+          if (query?.rootPath) {
+            root = query.rootPath
+          }
+        } catch (error) {
+          console.log('Encountered /commit~sha/... file path without valid query', error)
+        }
+        return root + path.sep
+      }
     )
 
     instance = new QuickOpener({
