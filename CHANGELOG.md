@@ -1,3 +1,11 @@
+## [0.4.3](https://github.com/mogelbrod/quick-opener/compare/v0.4.2...v0.4.3) (2023-11-11)
+
+
+### Bug Fixes
+
+* Don't implicitly change search root when only `~` has been entered ([9b29071](https://github.com/mogelbrod/quick-opener/commit/9b290714dadcaa6e221e52308a87fe33f1cd3490))
+* Queue sub directory scans using something akin to breadth first searching ([bb023f3](https://github.com/mogelbrod/quick-opener/commit/bb023f3823674b66fbcb978b424379401e5bac40))
+
 ## [0.4.2](https://github.com/mogelbrod/quick-opener/compare/v0.4.1...v0.4.2) (2022-12-22)
 
 
