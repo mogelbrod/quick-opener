@@ -135,12 +135,23 @@ export class QuickOpener {
       const inputHasDirSuffix = putils.hasDirSuffix(input)
       const isAncestor = input.startsWith('..')
       const isAbsolute =
-        inputParsed.root !== '' || input.startsWith(this.homePrefix)
+        inputParsed.root !== '' || input.startsWith(this.homePrefix + path.sep)
 
-      // console.log({ relative: this.relative, input, isAbsolute })
+      const items: vscode.QuickPickItem[] = []
 
-      // Immediately include ../ entry if not at root for quick navigation
-      if (isAncestor && path.parse(this.relative).dir) {
+      // Immediately include specific entries when likely desired
+      if (input === this.homePrefix) {
+        // Include '~/'
+        items.push(
+          {
+            label: putils.appendDirSuffix('~'),
+            buttons: this.directoryButtons(this.homePath),
+          },
+        )
+        this.qp.items = items
+      } else if (isAncestor && path.parse(this.relative).dir) {
+        // Include '../' if not at root for quick navigation
+        // Don't include it in `items` as the scan will also include it
         this.qp.items = [
           {
             label: putils.appendDirSuffix('..'),
@@ -162,7 +173,6 @@ export class QuickOpener {
         })
 
       // After this point the function latency may be noticeable
-      const items: vscode.QuickPickItem[] = []
 
       let rootEntry: ScanEntry | undefined
       const rootDir =
@@ -348,7 +358,7 @@ export class QuickOpener {
   /** Shorten an absolute path for display purposes */
   pathForDisplay(
     absolutePath: string,
-    shorten = this.qp.value.includes(this.homePrefix),
+    shorten = this.qp.value.startsWith(this.homePrefix),
   ) {
     return shorten
       ? absolutePath.replace(this.homePath, this.homePrefix)
@@ -358,7 +368,7 @@ export class QuickOpener {
   /** Resolve an absolute/relative path, including those starting with ~/ */
   resolveRelative(pth: string) {
     const parts = pth.split(path.sep)
-    if (parts[0] === this.homePrefix) {
+    if (parts[0] === this.homePrefix && parts.length > 1) {
       return path.join(this.homePath, ...parts.slice(1))
     }
     return this.relative && path.parse(pth).root === ''
