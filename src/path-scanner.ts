@@ -34,6 +34,9 @@ export class PathScanner {
   /** Maximum number of items to include in entry enumeration */
   maxCandidates: number
 
+  /** Maximum number of directories to recurse into */
+  maxDepth: number
+
   /** Maximum time (in ms) for scanner to run between input and showing results */
   timeout: number
 
@@ -46,19 +49,26 @@ export class PathScanner {
   constructor({
     exclude = DEFAULT_EXCLUDES as string[],
     maxCandidates = 0,
+    maxDepth = 20,
     timeout = 100,
     dirTTL = 30e3,
   } = {}) {
     this.exclude = new Set(exclude)
     this.maxCandidates = maxCandidates
+    this.maxDepth = maxDepth
     this.timeout = timeout
     this.dirTTL = dirTTL
   }
 
-  async scan(root: string, maxTime = this.timeout): ScanWorker {
+  async scan(root: string, {
+    maxTime = this.timeout,
+    maxDepth = this.maxDepth,
+    depth = 0,
+  } = {}): ScanWorker {
     root = this.normalizePath(root)
 
     const timestamp = Date.now()
+    // console.log('scan', root, maxTime)
 
     const rootEntry = this.getEntry(root, true)
     if (rootEntry.worker) {
@@ -74,12 +84,13 @@ export class PathScanner {
 
     this.dirs.set(root, rootEntry)
 
+    const recursiveTimouts: any[] = []
+
     return (rootEntry.worker = readdir(root, { withFileTypes: true })
       .then((entries) => {
         const timestampAfter = Date.now()
         const remainingTime = timestamp + maxTime - timestampAfter
-
-        // console.log('scanned', root, remainingTime, entries.length)
+        // console.log('done', root, remainingTime, entries.length)
 
         const workers: Promise<any>[] = []
 
@@ -89,8 +100,22 @@ export class PathScanner {
           }
           const childPath = root + entry.name
           const isDir = entry.isDirectory()
-          if (remainingTime > 0 && isDir && !this.getEntry(childPath)) {
-            workers.push(this.scan(childPath, remainingTime))
+          if (isDir && remainingTime > 0 && maxDepth > depth && !this.getEntry(childPath)) {
+            // eslint-disable-next-line no-loop-func
+            workers.push(new Promise((resolve, reject) => {
+              recursiveTimouts.push(setTimeout(() => {
+                const remainingTime2 = timestamp + maxTime - Date.now()
+                if (remainingTime2 <= 0) {
+                  resolve(undefined)
+                } else {
+                  this.scan(childPath, {
+                    maxTime: remainingTime2,
+                    maxDepth,
+                    depth: depth + 1,
+                  }).then(resolve, reject)
+                }
+              }, depth + 1))
+            }))
           }
           rootEntry[isDir ? 'dirs' : 'files']!.push(childPath)
         }
@@ -100,7 +125,11 @@ export class PathScanner {
             setTimeout(resolve, Math.max(0, remainingTime)),
           ),
           Promise.allSettled(workers),
-        ]).then(() => rootEntry)
+        ]).then(() => {
+          // Clear any remaining timeouts
+          recursiveTimouts.forEach(t => clearTimeout(t))
+          return rootEntry
+        })
       })
       .catch((error: Error & { code?: string }) => {
         rootEntry.errored = true
