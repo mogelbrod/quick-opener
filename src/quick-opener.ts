@@ -12,6 +12,11 @@ export class QuickOpener {
   /** Scanner instance */
   readonly scanner: PathScanner
 
+  /** Available path prefixes (prefix => substitution without /)*/
+  readonly prefixes: Record<string, string>
+  /** Keys of `prefixes` */
+  readonly prefixesArray: string[]
+
   /** Callback triggered when opener is disposed */
   private onDispose?: () => void
 
@@ -21,23 +26,26 @@ export class QuickOpener {
   /** Current vscode workspace paths */
   private workspacePaths: Set<string>
 
-  /** OS User home directory */
-  private readonly homePath = os.homedir()
-  private readonly homePrefix = '~'
-
   constructor(options: {
     /** Starting directory */
-    initial?: string,
+    initial?: string
+    /** Available path prefixes */
+    prefixes?: Record<string, string>
     /** Scanner instance */
-    scanner?: PathScanner,
+    scanner?: PathScanner
     /** Callback triggered when opener is disposed */
-    onDispose?: () => void,
+    onDispose?: () => void
   }) {
-    this.updateRelative(options.initial || this.homePath)
-    this.updateWorkspacePaths()
+    this.prefixes = Object.assign({}, options.prefixes)
+    this.prefixesArray = Object.keys(this.prefixes)
+    this.prefixesArray.forEach((p) => {
+      this.prefixes[p] = putils.trimDirSuffix(this.prefixes[p])
+    })
+    this.scanner = options.scanner ?? new PathScanner()
     this.onDispose = options.onDispose
 
-    this.scanner = options.scanner ?? new PathScanner()
+    this.updateRelative(options.initial || os.homedir())
+    this.updateWorkspacePaths()
 
     this.qp.placeholder = 'Enter a relative or absolute path to open…'
     this.qp.onDidHide(this.dispose.bind(this))
@@ -67,12 +75,15 @@ export class QuickOpener {
 
   /** Manually trigger an action */
   triggerAction(actionOrOffset: number | Action) {
-    const action = typeof actionOrOffset === 'number'
-      ? this.qp.buttons?.[actionOrOffset - 1]
-      : ACTIONS[actionOrOffset]
+    const action =
+      typeof actionOrOffset === 'number'
+        ? this.qp.buttons?.[actionOrOffset - 1]
+        : ACTIONS[actionOrOffset]
     if (!action) {
       const actionStr = JSON.stringify(action)
-      throw new Error(`Quick Opener: Expected valid action as argument (got '${actionStr}')`)
+      throw new Error(
+        `Quick Opener: Expected valid action as argument (got '${actionStr}')`,
+      )
     }
     this.onAction(this.qp.value, action)
   }
@@ -80,9 +91,10 @@ export class QuickOpener {
   /** Manually trigger an item action */
   triggerItemAction(actionOrOffset: number | Action) {
     const selected = this.qp.activeItems[0]
-    const action = typeof actionOrOffset === 'number'
-      ? selected?.buttons?.[actionOrOffset - 1]
-      : ACTIONS[actionOrOffset]
+    const action =
+      typeof actionOrOffset === 'number'
+        ? selected?.buttons?.[actionOrOffset - 1]
+        : ACTIONS[actionOrOffset]
     if (action) {
       this.onAction(selected.label, action)
     }
@@ -132,23 +144,24 @@ export class QuickOpener {
 
       const inputParsed = path.parse(input)
       const inputAbsolute = this.resolveRelative(input)
-      const inputIsDot = putils.isDot(input)
-      const inputHasDirSuffix = putils.hasDirSuffix(input)
+      const inputPrefix = this.prefixesArray.find((p) => {
+        return input === p || input.startsWith(p + path.sep)
+      })
+      const inputPrefixAbsolute = inputPrefix && this.prefixes[inputPrefix]
+      const isDotPath = putils.isDot(input)
       const isAncestor = input.startsWith('..')
-      const isAbsolute =
-        inputParsed.root !== '' || input.startsWith(this.homePrefix + path.sep)
+      const isAbsolute = inputParsed.root !== '' || !!inputPrefix
+      const hasDirSuffix = putils.hasDirSuffix(input)
 
       const items: vscode.QuickPickItem[] = []
 
       // Immediately include specific entries when likely desired
-      if (input === this.homePrefix) {
+      if (inputPrefix && input === inputPrefix && inputPrefixAbsolute) {
         // Include '~/'
-        items.push(
-          {
-            label: putils.appendDirSuffix('~'),
-            buttons: this.directoryButtons(this.homePath),
-          },
-        )
+        items.push({
+          label: putils.appendDirSuffix(inputPrefix),
+          buttons: this.directoryButtons(inputPrefixAbsolute),
+        })
         this.qp.items = items
       } else if (isAncestor && path.parse(this.relative).dir) {
         // Include '../' if not at root for quick navigation
@@ -168,8 +181,8 @@ export class QuickOpener {
         .then((isDir) => {
           this.qp.buttons = isDir
             ? this.directoryButtons(inputAbsolute)
-            : inputParsed.name && !inputIsDot
-              ? [inputHasDirSuffix ? ACTIONS.createDirectory : ACTIONS.createFile]
+            : inputParsed.name && !isDotPath
+              ? [hasDirSuffix ? ACTIONS.createDirectory : ACTIONS.createFile]
               : []
         })
 
@@ -177,7 +190,7 @@ export class QuickOpener {
 
       let rootEntry: ScanEntry | undefined
       const rootDir =
-        input.length && !inputHasDirSuffix && !isAncestor && !inputIsDot
+        input.length && !hasDirSuffix && !isAncestor && !isDotPath
           ? path.dirname(inputAbsolute)
           : inputAbsolute
       const rootParts = rootDir.split(path.sep)
@@ -280,7 +293,8 @@ export class QuickOpener {
       case ACTIONS.create:
       case ACTIONS.createDirectory:
       case ACTIONS.createFile: {
-        const createDir = putils.hasDirSuffix(target) || button === ACTIONS.createDirectory
+        const createDir =
+          putils.hasDirSuffix(target) || button === ACTIONS.createDirectory
         if (!stat) {
           // TODO: Handle error thrown when creating directory at path of existing file
           await fs.mkdir(createDir ? target : path.dirname(target), {
@@ -357,20 +371,30 @@ export class QuickOpener {
   }
 
   /** Shorten an absolute path for display purposes */
-  pathForDisplay(
-    absolutePath: string,
-    shorten = this.qp.value.startsWith(this.homePrefix),
-  ) {
-    return shorten
-      ? absolutePath.replace(this.homePath, this.homePrefix)
+  pathForDisplay(absolutePath: string) {
+    let bestPrefix = ''
+    let bestPrefixAbsolute = ''
+    this.prefixesArray.forEach((prefix) => {
+      const prefixAbsolute = this.prefixes[prefix]
+      if (
+        absolutePath.startsWith(prefixAbsolute) &&
+        prefixAbsolute.length > bestPrefixAbsolute.length
+      ) {
+        bestPrefix = prefix
+        bestPrefixAbsolute = prefixAbsolute
+      }
+    })
+    return bestPrefixAbsolute
+      ? bestPrefix + path.sep + path.relative(bestPrefixAbsolute, absolutePath)
       : absolutePath
   }
 
-  /** Resolve an absolute/relative path, including those starting with ~/ */
+  /** Resolve an absolute/relative path, expanding prefix if present */
   resolveRelative(pth: string) {
     const parts = pth.split(path.sep)
-    if (parts[0] === this.homePrefix && parts.length > 1) {
-      return path.join(this.homePath, ...parts.slice(1))
+    const prefix = this.prefixesArray.find((p) => parts[0] === p)
+    if (prefix && parts.length > 1) {
+      return path.join(this.prefixes[prefix], ...parts.slice(1))
     }
     return this.relative && path.parse(pth).root === ''
       ? path.join(this.relative, pth)

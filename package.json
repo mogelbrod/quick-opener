@@ -41,9 +41,22 @@
       "title": "Quick Opener",
       "properties": {
         "quickOpener.fallbackDirectory": {
-          "description": "Directory to start in when there's no directory/file open in the editor",
+          "description": "Directory to start in when there's no workspace/file open in the editor. Supports ${...} vscode variables.",
+          "markdownDescription": "Directory to start in when there's no workspace/file open in the editor. Supports [vscode variables](https://code.visualstudio.com/docs/editor/variables-reference).",
           "type": "string",
-          "default": "~"
+          "default": "${userHome}",
+          "order": 0
+        },
+        "quickOpener.prefixes": {
+          "description": "Mapping of path prefixes to their expanded paths. A path starting with any of these strings followed by a directory separator will be expanded to the corresponding path. Supports ${...} vscode variables.",
+          "markdownDescription": "Mapping of path prefixes to their expanded paths. A path starting with any of these strings followed by a directory separator will be expanded to the corresponding path. Supports [vscode variables](https://code.visualstudio.com/docs/editor/variables-reference).",
+          "type": "object",
+          "additionalProperties": "string",
+          "default": {
+            "~": "${userHome}",
+            "@": "${workspaceFolder}"
+          },
+          "order": 1
         },
         "quickOpener.exclude": {
           "description": "List of directory/file names to exclude from the results. Compared against the name of each path component.",
@@ -55,19 +68,22 @@
           ],
           "items": {
             "type": "string"
-          }
+          },
+          "order": 3
         },
         "quickOpener.timeout": {
           "description": "Maximum time (in ms) for scanner to run between input and showing results. Set to 0 to disable recursive search.",
           "type": "number",
           "default": 200,
-          "minimum": 0
+          "minimum": 0,
+          "order": 4
         },
         "quickOpener.maxCandidates": {
           "description": "Maximum number of paths to include in the list VS Code fuzzy matches against. Lower values improve UI responsiveness at the risk of fewer nested directories being included in the list.",
           "type": "number",
           "default": 10000,
-          "minimum": 100
+          "minimum": 100,
+          "order": 5
         }
       }
     },

@@ -16,7 +16,7 @@ Keybindings on Mac use <kbd>⌘</kbd> in place of <kbd>Ctrl</kbd>.
 - Open any path across the file system using only the keyboard (no more pesky native file system popups!)
 - Fuzzy path matching using the built-in VS Code fuzzy matcher
 - Starts in directory of current file (if open) to make relative navigation quick and easy
-- Begin entering any absolute path (or `~/`) to quickly locate files outside the current workspace
+- Begin entering any absolute path (or a pre-configured prefix) to quickly locate files outside the current workspace
 - Navigate to parent directory by entering `..` or pressing <kbd>Ctrl</kbd>-<kbd>U</kbd>
 - Additional functionality available via window and item buttons, as well as keybindings:
   - <kbd>Enter</kbd> - **File:** Open file / **Directory:** Change relative root directory
@@ -30,9 +30,9 @@ Keybindings on Mac use <kbd>⌘</kbd> in place of <kbd>Ctrl</kbd>.
 ## Installation
 
 1. Navigate to the Quick Opener extension page within VS Code by either:
-   * Visiting [marketplace.visualstudio.com/items?itemName=mogelbrod.quickopener](https://marketplace.visualstudio.com/items?itemName=mogelbrod.quickopener)
+   - Visiting [marketplace.visualstudio.com/items?itemName=mogelbrod.quickopener](https://marketplace.visualstudio.com/items?itemName=mogelbrod.quickopener)
      and pressing the _Install_ button (this should open VS Code)
-   * Searching for `mogelbrod.quickopener` from the VS Code _Extensions_ sidebar
+   - Searching for `mogelbrod.quickopener` from the VS Code _Extensions_ sidebar
 2. Press the corresponding _Install_ button
 
 ## Extension contributions
@@ -78,8 +78,10 @@ Example of how to define custom key bindings:
 
 ### Settings
 
-- `quickOpener.fallbackDirectory`: Directory to start in when there's no directory/file open in the editor.<br>
-  _Default value:_ `"~"`
+- `quickOpener.fallbackDirectory`: Directory to start in when there's no workspace/file open in the editor. Supports [vscode variables](https://code.visualstudio.com/docs/editor/variables-reference).<br>
+  _Default value:_ `"${userHome}"`
+- `quickOpener.prefixes`: Mapping of path prefixes to their expanded paths. A path starting with any of these strings followed by a directory separator will be expanded to the corresponding path. Supports [vscode variables](https://code.visualstudio.com/docs/editor/variables-reference).<br>
+  _Default value:_ `{ "~": "${userHome}", "@": "${workspaceFolder}" }`
 - `quickOpener.exclude`: List of directory/file names to exclude from the results.
   Compared against the name of each path component.<br>
   _Default value:_ `["node_modules", ".git", ".DS_Store"]`
@@ -100,12 +102,6 @@ Commands available while the plugin window is visible:
 - `quickOpener.triggerAction`: Trigger an action using the current input as path.
 - `quickOpener.triggerItemAction`: Trigger an action using the currently selected item as path.
 - `quickOpener.triggerTabCompletion`: Replace the input value with the selected item path.
-
-## Known Issues
-
-- The contents of nested subdirectories are sometimes not included in the
-  suggestions. This is due to a limitation of the current scanner, and will be
-  addressed in a future release.
 
 ## Disclaimer
 
