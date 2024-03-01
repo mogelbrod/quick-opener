@@ -157,10 +157,11 @@ export class QuickOpener {
 
       // Immediately include specific entries when likely desired
       if (inputPrefix && input === inputPrefix && inputPrefixAbsolute) {
-        // Include '~/'
+        // Include matching prefix
         items.push({
           label: putils.appendDirSuffix(inputPrefix),
           buttons: this.directoryButtons(inputPrefixAbsolute),
+          alwaysShow: true,
         })
         this.qp.items = items
       } else if (isAncestor && path.parse(this.relative).dir) {
@@ -209,7 +210,9 @@ export class QuickOpener {
         if (rootRelative !== '') {
           items.push({
             label: putils.appendDirSuffix(
-              isAbsolute ? this.pathForDisplay(rootEntry.path) : rootRelative,
+              isAbsolute
+                ? this.pathForDisplay(rootEntry.path, inputPrefix)
+                : rootRelative,
             ),
             buttons: this.directoryButtons(rootEntry.path),
           })
@@ -220,7 +223,7 @@ export class QuickOpener {
           items.push({
             label:
               (isAbsolute
-                ? this.pathForDisplay(subpath)
+                ? this.pathForDisplay(subpath, inputPrefix)
                 : path.relative(this.relative, subpath)) +
               (isDir ? path.sep : ''),
             buttons: isDir
@@ -375,21 +378,10 @@ export class QuickOpener {
   }
 
   /** Shorten an absolute path for display purposes */
-  pathForDisplay(absolutePath: string) {
-    let bestPrefix = ''
-    let bestPrefixAbsolute = ''
-    this.prefixesArray.forEach((prefix) => {
-      const prefixAbsolute = this.prefixes[prefix]
-      if (
-        absolutePath.startsWith(prefixAbsolute) &&
-        prefixAbsolute.length > bestPrefixAbsolute.length
-      ) {
-        bestPrefix = prefix
-        bestPrefixAbsolute = prefixAbsolute
-      }
-    })
-    return bestPrefixAbsolute
-      ? bestPrefix + path.sep + path.relative(bestPrefixAbsolute, absolutePath)
+  pathForDisplay(absolutePath: string, prefix?: string) {
+    const prefixAbsolute = !!prefix && this.prefixes[prefix]
+    return prefixAbsolute && absolutePath.startsWith(prefixAbsolute)
+      ? absolutePath.replace(prefixAbsolute, prefix)
       : absolutePath
   }
 
