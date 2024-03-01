@@ -278,7 +278,11 @@ export class QuickOpener {
       return
     }
 
-    vscode.workspace.openTextDocument(uri).then(vscode.window.showTextDocument)
+    vscode.workspace
+      .openTextDocument(uri)
+      .then(vscode.window.showTextDocument, (error) => {
+        vscode.window.showErrorMessage(error.message)
+      })
 
     this.dispose()
   }
