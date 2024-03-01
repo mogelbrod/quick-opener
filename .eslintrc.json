@@ -52,7 +52,7 @@
     "function-paren-newline": 0,
     "generator-star-spacing": 2,
     "global-require": 0,
-    "indent": [2, 2, { "SwitchCase": 1, "VariableDeclarator": { "var": 2, "let": 2, "const": 3 }, "flatTernaryExpressions": true }],
+    "indent": 0,
     "key-spacing": 2,
     "keyword-spacing": [2, { "before": true, "after": true, "overrides": {} }],
     "linebreak-style": 2,
@@ -97,7 +97,7 @@
     "no-unexpected-multiline": 2,
     "no-unmodified-loop-condition": 2,
     "no-unneeded-ternary": 2,
-    "no-unused-expressions": 0, // avoid errors o nchai expressions
+    "no-unused-expressions": 0, // avoid errors on chai expressions
     "no-unused-vars": 0,
     "no-use-before-define": 0,
     "no-useless-call": 2,
@@ -120,7 +120,7 @@
     "prefer-rest-params": 0,
     "prefer-spread": 0,
     "prefer-template": 0,
-    "quote-props": [2, "consistent"],
+    "quote-props": 0,
     "quotes": [2, "single", { "allowTemplateLiterals": true }],
     "radix": 2,
     "rest-spread-spacing": 2,

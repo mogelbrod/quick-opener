@@ -1,4 +1,6 @@
 {
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "files.exclude": {
     "out": true,
     "dist": false,
@@ -7,5 +9,5 @@
     "out": true,
     "dist": true,
   },
-  "typescript.tsc.autoDetect": "off"
+  "typescript.tsc.autoDetect": "off",
 }
