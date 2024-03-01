@@ -112,7 +112,7 @@ export class QuickOpener {
   /** Change current relative path */
   updateRelative(absolutePath: string) {
     this.relative = putils.appendDirSuffix(this.resolveRelative(absolutePath))
-    this.qp.title = this.pathForDisplay(this.relative!, true)
+    this.qp.title = this.relative
     this.qp.value = ''
     return this.relative
   }
