@@ -3,6 +3,7 @@
 **/.eslintrc.json
 **/tsconfig.json
 .gitignore
+.prettier*
 .vscode-test/**
 .vscode/**
 .yarnrc
