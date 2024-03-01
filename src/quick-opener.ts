@@ -93,6 +93,7 @@ export class QuickOpener {
     const { value } = this.qp
     if (value === '') {
       this.updateRelative(path.dirname(this.relative))
+      this.updateItems()
     } else {
       this.qp.value = putils.trimDirSuffix(value).includes(path.sep)
         ? putils.appendDirSuffix(path.dirname(value))
