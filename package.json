@@ -30,12 +30,9 @@
   "license": "MIT",
   "version": "0.4.3",
   "engines": {
-    "vscode": "^1.72.0"
+    "vscode": "^1.87.0"
   },
   "main": "./dist/extension.js",
-  "activationEvents": [
-    "onCommand:quickOpener.show"
-  ],
   "contributes": {
     "configuration": {
       "title": "Quick Opener",
