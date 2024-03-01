@@ -1,3 +1,18 @@
+## [0.5.0](https://github.com/mogelbrod/quick-opener/compare/v0.4.3...v0.5.0) (2024-03-01)
+
+
+### Features
+
+* Add ability to define prefixes via `quickOpener.prefixes` ([1506c0e](https://github.com/mogelbrod/quick-opener/commit/1506c0eeb340ba5dcb2ac55568e9c6d328a97fa5))
+
+
+### Bug Fixes
+
+* Ensure displayed paths in quick pick use same prefix as input ([acefa87](https://github.com/mogelbrod/quick-opener/commit/acefa87625bff461dcc69e0c95ef7a9542d903be))
+* Show error message if selected file fails to open ([7c85766](https://github.com/mogelbrod/quick-opener/commit/7c857665207d7295bd630afe44ca8714e40ea773))
+* Stop shortening quick pick title path ([a767150](https://github.com/mogelbrod/quick-opener/commit/a76715061994ca994dfb2405ed360a00266afdea))
+* Update list when popping path ([83a3083](https://github.com/mogelbrod/quick-opener/commit/83a308331fd21f7e4c74fae92ec470cc1762c240)), closes [#2](https://github.com/mogelbrod/quick-opener/issues/2)
+
 ## [0.4.3](https://github.com/mogelbrod/quick-opener/compare/v0.4.2...v0.4.3) (2023-11-11)
 
 
