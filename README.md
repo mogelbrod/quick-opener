@@ -45,7 +45,7 @@ The default behaviour of the plugin is to take over the standard key binding to 
 If you wish to use another key binding you can append the following to
 [keybindings.json](https://code.visualstudio.com/docs/getstarted/keybindings#_advanced-customization):
 
-```json
+```jsonc
   {
     "key": "cmd+o", // Revert the binding back to the editor default
     "command": "-quickOpener.show"
@@ -60,7 +60,7 @@ If you wish to use another key binding you can append the following to
 
 Example of how to define custom key bindings:
 
-```json
+```jsonc
   {
     "when": "inQuickOpener", // limit binding to when plugin is visible
     "command": "quickOpener.triggerItemAction",
