@@ -295,6 +295,7 @@ export class QuickOpener {
     const target = this.resolveRelative(value)
     const stat = await fs.stat(target).catch(() => null)
     const uri = vscode.Uri.file(target)
+    console.log(`Executing action`, { value, target })
 
     switch (button) {
       case ACTIONS.create:
@@ -310,6 +311,7 @@ export class QuickOpener {
           if (!createDir) {
             await fs.appendFile(target, '')
           }
+          console.log(`Created ${createDir ? 'directory' : 'file'} ${target}`)
         }
         // Ensure any existing scan entry for the target is removed
         this.scanner.flushEntry(target)
@@ -390,7 +392,7 @@ export class QuickOpener {
     const parts = pth.split(path.sep)
     const prefix = this.prefixesArray.find((p) => parts[0] === p)
     if (prefix && parts.length > 1) {
-      return path.join(this.prefixes[prefix], ...parts.slice(1))
+      return path.join(this.prefixes[prefix], parts.slice(1).join(path.sep))
     }
     return this.relative && path.parse(pth).root === ''
       ? path.join(this.relative, pth)
