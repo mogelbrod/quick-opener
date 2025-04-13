@@ -1,3 +1,9 @@
+## [0.5.1](https://github.com/mogelbrod/quick-opener/compare/v0.5.0...v0.5.1) (2025-04-13)
+
+### Bug Fixes
+
+* Create directories as expected when input starts with a prefix ([20f52ac](https://github.com/mogelbrod/quick-opener/commit/20f52ace20c2582766d546b7968f1d7e43fc4823)), closes [#7](https://github.com/mogelbrod/quick-opener/issues/7)
+
 ## [0.5.0](https://github.com/mogelbrod/quick-opener/compare/v0.4.3...v0.5.0) (2024-03-01)
 
 
