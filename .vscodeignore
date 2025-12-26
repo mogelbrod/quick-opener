@@ -1,9 +1,7 @@
 **/*.map
 **/*.ts
-**/.eslintrc.json
 **/tsconfig.json
 .gitignore
-.prettier*
 .vscode-test/**
 .vscode/**
 .yarnrc
@@ -11,5 +9,3 @@ node_modules/**
 out/**
 release.config.js
 src/**
-vsc-extension-quickstart.md
-webpack.config.js

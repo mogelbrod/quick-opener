@@ -13,7 +13,7 @@ const common = {
       { type: 'docs', section: 'Documentation', hidden: true },
       { type: 'style', section: 'Styles', hidden: true },
       { type: 'test', section: 'Tests', hidden: true },
-    ]
+    ],
   },
   releaseRules: [
     { breaking: true, release: 'major' },
@@ -48,8 +48,11 @@ module.exports = {
     '@semantic-release/changelog',
     ['semantic-release-vsce', { packageVsix: vsixName }],
     '@semantic-release/git',
-    ['@semantic-release/github', {
-      assets: [{ path: vsixName, label: `Packaged extension (${vsixName})` }],
-    }],
-  ]
+    [
+      '@semantic-release/github',
+      {
+        assets: [{ path: vsixName, label: `Packaged extension (${vsixName})` }],
+      },
+    ],
+  ],
 }

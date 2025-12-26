@@ -1,8 +1,8 @@
-import * as vscode from 'vscode'
 import * as path from 'path'
-import { QuickOpener, updateContext, Action } from './quick-opener'
+import * as vscode from 'vscode'
 import { PathScanner } from './path-scanner'
 import { sepRegex } from './path-utils'
+import { type Action, QuickOpener, updateContext } from './quick-opener'
 import { variableExpansionFactory } from './variable-expansion'
 
 /** Currently visible instance of plugin */
@@ -29,10 +29,7 @@ export function activate(ctx: vscode.ExtensionContext) {
               root = query.rootPath
             }
           } catch (error) {
-            console.log(
-              'Encountered /commit~sha/... file path without valid query',
-              error,
-            )
+            console.log('Encountered /commit~sha/... file path without valid query', error)
           }
           return root + path.sep
         },
@@ -40,18 +37,14 @@ export function activate(ctx: vscode.ExtensionContext) {
 
       const variableExpansion = variableExpansionFactory()
       const prefixes = Object.fromEntries(
-        Object.entries(config.get('prefixes') || {}).map(([k, v]) => [
-          k,
-          variableExpansion(v),
-        ]),
+        Object.entries(config.get('prefixes') || {}).map(([k, v]) => [k, variableExpansion(v)]),
       )
 
       instance = new QuickOpener({
         // Only use dir of active file when it looks like a valid path
         initial: activeFileName?.includes(path.sep)
           ? path.dirname(activeFileName)
-          : workspacePath ??
-            variableExpansion(config.get('fallbackDirectory') as string),
+          : (workspacePath ?? variableExpansion(config.get('fallbackDirectory') as string)),
         prefixes,
         scanner: new PathScanner({
           exclude: config.get('exclude') as string[],
@@ -87,9 +80,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   )
 
   ctx.subscriptions.push(
-    vscode.commands.registerCommand('quickOpener.popPath', () =>
-      instance?.popPath(),
-    ),
+    vscode.commands.registerCommand('quickOpener.popPath', () => instance?.popPath()),
   )
 
   ctx.subscriptions.push(

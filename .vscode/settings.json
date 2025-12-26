@@ -1,13 +1,34 @@
 {
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "biomejs.biome",
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+  "editor.rulers": [
+    100
+  ],
   "files.exclude": {
     "out": true,
-    "dist": false,
+    "dist": false
   },
   "search.exclude": {
     "out": true,
     "dist": true,
+    "node_modules": true
   },
   "typescript.tsc.autoDetect": "off",
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
 }

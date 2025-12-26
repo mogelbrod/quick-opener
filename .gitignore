@@ -8,4 +8,6 @@ Thumbs.db
 dist
 node_modules
 npm-debug.log
-out
+out.env
+.env.local
+*.code-workspace

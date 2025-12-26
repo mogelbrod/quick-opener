@@ -1,5 +1,5 @@
-import * as path from 'path'
 import * as os from 'os'
+import * as path from 'path'
 import * as process from 'process'
 import * as vscode from 'vscode'
 
@@ -17,8 +17,7 @@ export function variableExpansionFactory() {
   const workspaceFolders = vscode.workspace.workspaceFolders
   const activeFileUri = activeEditor?.document.uri
   const parsedPath = activeFileUri && path.parse(activeFileUri.fsPath)
-  const fileWorkspaceFolder =
-    activeFileUri && vscode.workspace.getWorkspaceFolder(activeFileUri)
+  const fileWorkspaceFolder = activeFileUri && vscode.workspace.getWorkspaceFolder(activeFileUri)
   const relativeFile = fileWorkspaceFolder
     ? path.relative(fileWorkspaceFolder.uri.fsPath, activeFileUri.fsPath)
     : ''
@@ -26,15 +25,12 @@ export function variableExpansionFactory() {
   // Expand simple variables
   const values = {
     userHome: os.homedir(),
-    workspaceFolderBasename: (name: string): string =>
-      values.workspaceFolder(name, true),
+    workspaceFolderBasename: (name: string): string => values.workspaceFolder(name, true),
     workspaceFolder: (name: string, basename = false) => {
       const folder = name
-        ? workspaceFolders?.find((w) => w.name === name.slice(1))
+        ? workspaceFolders?.find(w => w.name === name.slice(1))
         : workspaceFolders?.[0]
-      return basename
-        ? folder?.uri.path.split('/').pop() || ''
-        : folder?.uri.fsPath || ''
+      return basename ? folder?.uri.path.split('/').pop() || '' : folder?.uri.fsPath || ''
     },
     file: activeFileUri?.fsPath || '',
     fileWorkspaceFolder: fileWorkspaceFolder?.uri.fsPath || '',
@@ -49,10 +45,7 @@ export function variableExpansionFactory() {
     selectedText: () => {
       return (
         activeEditor?.document.getText(
-          new vscode.Range(
-            activeEditor.selection.start,
-            activeEditor.selection.end,
-          ),
+          new vscode.Range(activeEditor.selection.start, activeEditor.selection.end),
         ) || ''
       )
     },
@@ -66,17 +59,14 @@ export function variableExpansionFactory() {
 
   return function variableExpansion(input: string, throwOnUnresolved = true) {
     const unresolved: string[] = []
-    const interpolated = input.replace(
-      /\${(\w+)(:[^\]}]+)?}/g,
-      (placeholder, key, param) => {
-        if (Object.hasOwnProperty.call(values, key)) {
-          const value = values[key as keyof typeof values]
-          return typeof value === 'function' ? value(param || '') : value
-        }
-        unresolved.push(key)
-        return ''
-      },
-    )
+    const interpolated = input.replace(/\${(\w+)(:[^\]}]+)?}/g, (_placeholder, key, param) => {
+      if (Object.hasOwn(values, key)) {
+        const value = values[key as keyof typeof values]
+        return typeof value === 'function' ? value(param || '') : value
+      }
+      unresolved.push(key)
+      return ''
+    })
     if (unresolved.length && throwOnUnresolved) {
       throw new TypeError(
         `Unsupported variables encountered (${unresolved.join(', ')}) in "${input}"`,

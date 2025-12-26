@@ -1,4 +1,5 @@
 import { readdir, stat } from 'fs/promises'
+
 import path = require('path')
 
 type ScanWorker = Promise<ScanEntry>
@@ -22,11 +23,7 @@ export type ScanEntry = {
   worker?: ScanWorker
 }
 
-export const DEFAULT_EXCLUDES: readonly string[] = [
-  'node_modules',
-  '.git',
-  '.DS_Store',
-]
+export const DEFAULT_EXCLUDES: readonly string[] = ['node_modules', '.git', '.DS_Store']
 
 export class PathScanner {
   /** List of directory/file names to exclude from result lists. */
@@ -90,7 +87,7 @@ export class PathScanner {
     const recursiveTimouts: any[] = []
 
     return (rootEntry.worker = readdir(root, { withFileTypes: true })
-      .then((entries) => {
+      .then(entries => {
         const timestampAfter = Date.now()
         const remainingTime = timestamp + maxTime - timestampAfter
         // console.log('done', root, remainingTime, entries.length)
@@ -103,12 +100,7 @@ export class PathScanner {
           }
           const childPath = root + entry.name
           const isDir = entry.isDirectory()
-          if (
-            isDir &&
-            remainingTime > 0 &&
-            maxDepth > depth &&
-            !this.getEntry(childPath)
-          ) {
+          if (isDir && remainingTime > 0 && maxDepth > depth && !this.getEntry(childPath)) {
             // eslint-disable-next-line no-loop-func
             workers.push(
               new Promise((resolve, reject) => {
@@ -133,13 +125,13 @@ export class PathScanner {
         }
 
         return Promise.race([
-          new Promise((resolve) =>
-            setTimeout(resolve, Math.max(0, remainingTime)),
-          ),
+          new Promise(resolve => setTimeout(resolve, Math.max(0, remainingTime))),
           Promise.allSettled(workers),
         ]).then(() => {
           // Clear any remaining timeouts
-          recursiveTimouts.forEach((t) => clearTimeout(t))
+          for (const t of recursiveTimouts) {
+            clearTimeout(t)
+          }
           return rootEntry
         })
       })
@@ -153,19 +145,13 @@ export class PathScanner {
       }))
   }
 
-  forEach(
-    root: string | ScanEntry,
-    callback: (pth: string, isDir: boolean) => void,
-  ) {
+  forEach(root: string | ScanEntry, callback: (pth: string, isDir: boolean) => void) {
     const queue = [root && typeof root === 'object' ? root.path : root]
     const result: string[] = []
     const seen = new Set<string>()
     let length = 0
 
-    while (
-      queue.length &&
-      (!this.maxCandidates || length < this.maxCandidates)
-    ) {
+    while (queue.length && (!this.maxCandidates || length < this.maxCandidates)) {
       const entry = this.getEntry(queue.pop() as string)
       if (!entry) {
         continue
@@ -242,7 +228,7 @@ export class PathScanner {
     // If so store it as an unscanned entry to enable later lookups
     if (!isDir) {
       isDir = await stat(pth)
-        .then((x) => x.isDirectory())
+        .then(x => x.isDirectory())
         .catch(() => false)
       if (isDir) {
         // Create entry if it hasn't been created during the async stat call
@@ -260,7 +246,7 @@ export class PathScanner {
 // Lightweight test runner
 if (require.main === module) {
   const pe = new PathScanner()
-  pe.scan(process.cwd()).then((res) => {
+  pe.scan(process.cwd()).then(res => {
     console.log(pe.toArray(res))
   })
 }

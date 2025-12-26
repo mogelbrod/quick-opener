@@ -1,40 +1,104 @@
 // See https://go.microsoft.com/fwlink/?LinkId=733558
 // for the documentation about the tasks.json format
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "npm",
-			"script": "watch",
-			"problemMatcher": "$ts-webpack-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never",
-				"group": "watchers"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		},
-		{
-			"type": "npm",
-			"script": "watch-tests",
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never",
-				"group": "watchers"
-			},
-			"group": "build"
-		},
-		{
-			"label": "tasks: watch-tests",
-			"dependsOn": [
-				"npm: watch",
-				"npm: watch-tests"
-			],
-			"problemMatcher": []
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "presentation": {
+        "clear": true
+      }
+    },
+    {
+      "label": "build: watch mode",
+      "type": "npm",
+      "script": "build:watch",
+      "isBackground": true,
+      "group": {
+        "kind": "build",
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(\\w+)\\s+\\((\\d+),(\\d+)\\):\\s+(error|warning)\\s+(.*)$",
+          "file": 1,
+          "location": 2,
+          "endLine": 3,
+          "severity": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^[Ww]atching for changes",
+          "endsPattern": "^.*build finished"
+        }
+      },
+      "presentation": {
+        "reveal": "never",
+      },
+    },
+    {
+      "label": "check",
+      "type": "npm",
+      "script": "check",
+      "problemMatcher": [
+        "$tsc",
+        {
+          "owner": "biome",
+          "source": "biome",
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(\\w+)\\s+\\((\\d+),(\\d+)\\):\\s+(error|warning)\\s+(.*)$",
+            "file": 1,
+            "location": 2,
+            "endLine": 3,
+            "severity": 4,
+            "message": 5
+          },
+        }
+      ],
+      "presentation": {
+        "reveal": "silent",
+        "revealProblems": "onProblem",
+        "clear": true,
+      }
+    },
+    {
+      "label": "biome: fix",
+      "type": "npm",
+      "script": "fix",
+      "problemMatcher": {
+        "owner": "biome",
+        "source": "biome",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(.+?):(\\d+):(\\d+)\\s+(error|warning)\\b\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      },
+      "presentation": {
+        "reveal": "silent",
+        "revealProblems": "onProblem",
+        "clear": true
+      }
+    }
+  ]
 }
