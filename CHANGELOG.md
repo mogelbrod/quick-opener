@@ -1,3 +1,9 @@
+## [0.5.2](https://github.com/mogelbrod/quick-opener/compare/v0.5.1...v0.5.2) (2025-12-26)
+
+### Bug Fixes
+
+* Prevent duplicate entries in picker & optimize scanner code ([862c032](https://github.com/mogelbrod/quick-opener/commit/862c0325ae6a09c5a515e4034263bc05a023481f))
+
 ## [0.5.1](https://github.com/mogelbrod/quick-opener/compare/v0.5.0...v0.5.1) (2025-04-13)
 
 ### Bug Fixes
