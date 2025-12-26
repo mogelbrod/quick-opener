@@ -22,7 +22,11 @@ export type ScanEntry = {
   worker?: ScanWorker
 }
 
-export const DEFAULT_EXCLUDES: readonly string[] = ['node_modules', '.git', '.DS_Store']
+export const DEFAULT_EXCLUDES: readonly string[] = [
+  'node_modules',
+  '.git',
+  '.DS_Store',
+]
 
 export class PathScanner {
   /** List of directory/file names to exclude from result lists. */
@@ -60,11 +64,10 @@ export class PathScanner {
     this.dirTTL = dirTTL
   }
 
-  async scan(root: string, {
-    maxTime = this.timeout,
-    maxDepth = this.maxDepth,
-    depth = 0,
-  } = {}): ScanWorker {
+  async scan(
+    root: string,
+    { maxTime = this.timeout, maxDepth = this.maxDepth, depth = 0 } = {},
+  ): ScanWorker {
     root = this.normalizePath(root)
 
     const timestamp = Date.now()
@@ -100,22 +103,31 @@ export class PathScanner {
           }
           const childPath = root + entry.name
           const isDir = entry.isDirectory()
-          if (isDir && remainingTime > 0 && maxDepth > depth && !this.getEntry(childPath)) {
+          if (
+            isDir &&
+            remainingTime > 0 &&
+            maxDepth > depth &&
+            !this.getEntry(childPath)
+          ) {
             // eslint-disable-next-line no-loop-func
-            workers.push(new Promise((resolve, reject) => {
-              recursiveTimouts.push(setTimeout(() => {
-                const remainingTime2 = timestamp + maxTime - Date.now()
-                if (remainingTime2 <= 0) {
-                  resolve(undefined)
-                } else {
-                  this.scan(childPath, {
-                    maxTime: remainingTime2,
-                    maxDepth,
-                    depth: depth + 1,
-                  }).then(resolve, reject)
-                }
-              }, depth + 1))
-            }))
+            workers.push(
+              new Promise((resolve, reject) => {
+                recursiveTimouts.push(
+                  setTimeout(() => {
+                    const remainingTime2 = timestamp + maxTime - Date.now()
+                    if (remainingTime2 <= 0) {
+                      resolve(undefined)
+                    } else {
+                      this.scan(childPath, {
+                        maxTime: remainingTime2,
+                        maxDepth,
+                        depth: depth + 1,
+                      }).then(resolve, reject)
+                    }
+                  }, depth + 1),
+                )
+              }),
+            )
           }
           rootEntry[isDir ? 'dirs' : 'files']!.push(childPath)
         }
@@ -127,7 +139,7 @@ export class PathScanner {
           Promise.allSettled(workers),
         ]).then(() => {
           // Clear any remaining timeouts
-          recursiveTimouts.forEach(t => clearTimeout(t))
+          recursiveTimouts.forEach((t) => clearTimeout(t))
           return rootEntry
         })
       })
@@ -147,25 +159,45 @@ export class PathScanner {
   ) {
     const queue = [root && typeof root === 'object' ? root.path : root]
     const result: string[] = []
+    const seen = new Set<string>()
     let length = 0
 
-    const dirCallback = (pth: string) => callback(pth, true)
-    const fileCallback = (pth: string) => callback(pth, false)
-
-    while (queue.length && (!this.maxCandidates || length < this.maxCandidates)) {
+    while (
+      queue.length &&
+      (!this.maxCandidates || length < this.maxCandidates)
+    ) {
       const entry = this.getEntry(queue.pop() as string)
       if (!entry) {
         continue
       }
-      let arrayLength: number | undefined
-      if (arrayLength = entry.dirs?.length) {
-        length += arrayLength
-        queue.push(...entry.dirs)
-        entry.dirs.forEach(dirCallback)
+
+      // Process directories
+      const dirs = entry.dirs
+      if (dirs?.length) {
+        length += dirs.length
+        queue.push(...dirs)
+        for (let i = 0; i < dirs.length; i++) {
+          const pth = dirs[i]
+          if (seen.has(pth)) {
+            continue
+          }
+          seen.add(pth)
+          callback(pth, true)
+        }
       }
-      if (arrayLength = entry.files?.length) {
-        length += arrayLength
-        entry.files.forEach(fileCallback)
+
+      // Process files
+      const files = entry.files
+      if (files?.length) {
+        length += files.length
+        for (let i = 0; i < files.length; i++) {
+          const pth = files[i]
+          if (seen.has(pth)) {
+            continue
+          }
+          seen.add(pth)
+          callback(pth, false)
+        }
       }
     }
 
@@ -228,7 +260,7 @@ export class PathScanner {
 // Lightweight test runner
 if (require.main === module) {
   const pe = new PathScanner()
-  pe.scan(process.cwd()).then(res => {
+  pe.scan(process.cwd()).then((res) => {
     console.log(pe.toArray(res))
   })
 }

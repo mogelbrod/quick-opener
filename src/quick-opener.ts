@@ -26,6 +26,9 @@ export class QuickOpener {
   /** Current vscode workspace paths */
   private workspacePaths: Set<string>
 
+  /** Monotonically increasing counter for updateItems calls */
+  private updateCounter = 0
+
   constructor(options: {
     /** Starting directory */
     initial?: string
@@ -107,7 +110,8 @@ export class QuickOpener {
       this.updateRelative(path.dirname(this.relative))
       this.updateItems()
     } else {
-      this.qp.value = putils.trimDirSuffix(value).includes(path.sep)
+      const sep = path.sep
+      this.qp.value = putils.trimDirSuffix(value).includes(sep)
         ? putils.appendDirSuffix(path.dirname(value))
         : ''
     }
@@ -139,13 +143,16 @@ export class QuickOpener {
   /** Update item list in response to input change */
   async updateItems() {
     const input = this.qp.value
+    const updateId = ++this.updateCounter
+
     try {
       const updateStart = Date.now()
 
       const inputParsed = path.parse(input)
       const inputAbsolute = this.resolveRelative(input)
+      const sep = path.sep
       const inputPrefix = this.prefixesArray.find((p) => {
-        return input === p || input.startsWith(p + path.sep)
+        return input === p || input.startsWith(p + sep)
       })
       const inputPrefixAbsolute = inputPrefix && this.prefixes[inputPrefix]
       const isDotPath = putils.isDot(input)
@@ -180,6 +187,9 @@ export class QuickOpener {
       const windowButtonsPromise = this.scanner
         .isDirectory(inputAbsolute)
         .then((isDir) => {
+          if (updateId !== this.updateCounter) {
+            return
+          }
           this.qp.buttons = isDir
             ? this.directoryButtons(inputAbsolute)
             : inputParsed.name && !isDotPath
@@ -194,11 +204,14 @@ export class QuickOpener {
         input.length && !hasDirSuffix && !isAncestor && !isDotPath
           ? path.dirname(inputAbsolute)
           : inputAbsolute
-      const rootParts = rootDir.split(path.sep)
+      const rootParts = rootDir.split(sep)
 
       for (let i = rootParts.length; i > 0; i--) {
-        const rootCandidate = rootParts.slice(0, i).join(path.sep)
+        const rootCandidate = rootParts.slice(0, i).join(sep)
         rootEntry = await this.scanner.scan(rootCandidate)
+        if (updateId !== this.updateCounter) {
+          return
+        }
         // console.log(rootEntry.errored ? 'skipped' : 'chosen', rootCandidate)
         if (!rootEntry.errored) {
           break
@@ -207,34 +220,54 @@ export class QuickOpener {
 
       if (rootEntry) {
         const rootRelative = path.relative(this.relative, rootEntry.path)
+        const seenPaths = new Set<string>()
+
         if (rootRelative !== '') {
+          const rootPath = putils.appendDirSuffix(
+            isAbsolute
+              ? this.pathForDisplay(rootEntry.path, inputPrefix)
+              : rootRelative,
+          )
+          seenPaths.add(rootPath)
           items.push({
-            label: putils.appendDirSuffix(
-              isAbsolute
-                ? this.pathForDisplay(rootEntry.path, inputPrefix)
-                : rootRelative,
-            ),
+            label: rootPath,
             buttons: this.directoryButtons(rootEntry.path),
           })
         }
 
+        // Cache button arrays to avoid recreating them
+        const splitButton = [ACTIONS.openSplit]
+        const workspaceButtons = [ACTIONS.workspaceOpen, ACTIONS.openSplit]
+
         // Generate list of items from scan results
         this.scanner.forEach(rootEntry, (subpath, isDir) => {
+          const displayPath = isAbsolute
+            ? this.pathForDisplay(subpath, inputPrefix)
+            : path.relative(this.relative, subpath)
+          const label = isDir ? displayPath + path.sep : displayPath
+
+          // Skip duplicates
+          if (seenPaths.has(label)) {
+            return
+          }
+          seenPaths.add(label)
+
           items.push({
-            label:
-              (isAbsolute
-                ? this.pathForDisplay(subpath, inputPrefix)
-                : path.relative(this.relative, subpath)) +
-              (isDir ? path.sep : ''),
+            label,
             buttons: isDir
               ? this.directoryButtons(subpath)
               : putils.isWorkspaceFile(subpath)
-                ? [ACTIONS.workspaceOpen, ACTIONS.openSplit]
-                : [ACTIONS.openSplit],
+                ? workspaceButtons
+                : splitButton,
           })
         })
       } else {
         console.warn('no root resolved from', inputAbsolute)
+      }
+
+      // Only update if this is still the latest request
+      if (updateId !== this.updateCounter) {
+        return
       }
 
       const updateDuration = Date.now() - updateStart
@@ -244,6 +277,9 @@ export class QuickOpener {
       // Wait for window buttons to be generated until we're considered done
       await windowButtonsPromise
     } catch (error: any) {
+      if (updateId !== this.updateCounter) {
+        return
+      }
       this.qp.items = [
         {
           label: 'Error occurred',
