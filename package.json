@@ -30,7 +30,7 @@
   "license": "MIT",
   "version": "0.5.2",
   "engines": {
-    "vscode": "^1.95.0",
+    "vscode": "^1.108.0",
     "node": ">=18.0.0"
   },
   "main": "./dist/extension.js",
@@ -69,19 +69,25 @@
           },
           "order": 3
         },
+        "quickOpener.icons": {
+          "description": "Show file/directory icons in the quick picker.",
+          "type": "boolean",
+          "default": true,
+          "order": 4
+        },
         "quickOpener.timeout": {
           "description": "Maximum time (in ms) for scanner to run between input and showing results. Set to 0 to disable recursive search.",
           "type": "number",
           "default": 200,
           "minimum": 0,
-          "order": 4
+          "order": 5
         },
         "quickOpener.maxCandidates": {
           "description": "Maximum number of paths to include in the list VS Code fuzzy matches against. Lower values improve UI responsiveness at the risk of fewer nested directories being included in the list.",
           "type": "number",
           "default": 10000,
           "minimum": 100,
-          "order": 5
+          "order": 6
         }
       }
     },
@@ -149,7 +155,7 @@
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@types/node": "25.x",
-    "@types/vscode": "^1.95.0",
+    "@types/vscode": "^1.108.0",
     "@vscode/vsce": "^3.7.1",
     "conventional-changelog-conventionalcommits": "^9.1.0",
     "esbuild": "^0.27.2",

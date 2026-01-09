@@ -17,6 +17,9 @@ export class QuickOpener {
   /** Keys of `prefixes` */
   readonly prefixesArray: string[]
 
+  /** Show icons in quick picker */
+  readonly icons: boolean
+
   /** Callback triggered when opener is disposed */
   private onDispose?: () => void
 
@@ -34,6 +37,8 @@ export class QuickOpener {
     initial?: string
     /** Available path prefixes */
     prefixes?: Record<string, string>
+    /** Show icons in quick picker */
+    icons?: boolean
     /** Scanner instance */
     scanner?: PathScanner
     /** Callback triggered when opener is disposed */
@@ -44,6 +49,7 @@ export class QuickOpener {
     this.prefixesArray.forEach(p => {
       this.prefixes[p] = putils.trimDirSuffix(this.prefixes[p])
     })
+    this.icons = options.icons ?? true
     this.scanner = options.scanner ?? new PathScanner()
     this.onDispose = options.onDispose
 
@@ -164,20 +170,15 @@ export class QuickOpener {
       if (inputPrefix && input === inputPrefix && inputPrefixAbsolute) {
         // Include matching prefix
         items.push({
-          label: putils.appendDirSuffix(inputPrefix),
-          buttons: this.directoryButtons(inputPrefixAbsolute),
+          ...this.generateItem(putils.appendDirSuffix(inputPrefix), inputPrefixAbsolute, false),
           alwaysShow: true,
         })
         this.qp.items = items
       } else if (isAncestor && path.parse(this.relative).dir) {
         // Include '../' if not at root for quick navigation
         // Don't include it in `items` as the scan will also include it
-        this.qp.items = [
-          {
-            label: putils.appendDirSuffix('..'),
-            buttons: this.directoryButtons(path.resolve(this.relative, '..')),
-          },
-        ]
+        const parentPath = path.resolve(this.relative, '..')
+        this.qp.items = [this.generateItem(putils.appendDirSuffix('..'), parentPath, false)]
       }
 
       // Determine which buttons to show in quick pick titlebar
@@ -223,15 +224,8 @@ export class QuickOpener {
             isAbsolute ? this.pathForDisplay(rootEntry.path, inputPrefix) : rootRelative,
           )
           seenPaths.add(rootPath)
-          items.push({
-            label: rootPath,
-            buttons: this.directoryButtons(rootEntry.path),
-          })
+          items.push(this.generateItem(rootPath, rootEntry.path, false))
         }
-
-        // Cache button arrays to avoid recreating them
-        const splitButton = [ACTIONS.openSplit]
-        const workspaceButtons = [ACTIONS.workspaceOpen, ACTIONS.openSplit]
 
         // Generate list of items from scan results
         this.scanner.forEach(rootEntry, (subpath, isDir) => {
@@ -246,14 +240,7 @@ export class QuickOpener {
           }
           seenPaths.add(label)
 
-          items.push({
-            label,
-            buttons: isDir
-              ? this.directoryButtons(subpath)
-              : putils.isWorkspaceFile(subpath)
-                ? workspaceButtons
-                : splitButton,
-          })
+          items.push(this.generateItem(label, subpath, !isDir))
         })
       } else {
         console.warn('no root resolved from', inputAbsolute)
@@ -278,6 +265,7 @@ export class QuickOpener {
         {
           label: 'Error occurred',
           detail: error.message,
+          iconPath: new vscode.ThemeIcon('alert'),
         },
       ]
     }
@@ -423,11 +411,39 @@ export class QuickOpener {
   }
 
   /** Generate buttons for a directory item */
-  directoryButtons(absolutePath: string): vscode.QuickInputButton[] {
-    return [
-      this.workspacePaths.has(absolutePath) ? ACTIONS.workspaceRemove : ACTIONS.workspaceAdd,
-      ACTIONS.openWindow,
-    ]
+  directoryButtons(absolutePath: string): readonly vscode.QuickInputButton[] {
+    return this.workspacePaths.has(absolutePath) ? BUTTON_COMBOS.workspaceDir : BUTTON_COMBOS.dir
+  }
+
+  /** Generate a quick pick item */
+  generateItem(
+    /** Label displayed to user in quick picker */
+    label: string,
+    /** Path which the item represents */
+    path: string,
+    /** Does the path correspond to a file? */
+    isFile: boolean,
+    /** Pass `true` for default button for given path, or override. */
+    buttons: boolean | readonly vscode.QuickInputButton[] = true,
+  ): vscode.QuickPickItem {
+    const buttonArray =
+      buttons === false
+        ? undefined
+        : buttons === true
+          ? isFile
+            ? putils.isWorkspaceFile(path)
+              ? BUTTON_COMBOS.workspaceFile
+              : BUTTON_COMBOS.file
+            : this.directoryButtons(path)
+          : buttons
+
+    return {
+      label,
+      description: ' ',
+      iconPath: this.icons ? (isFile ? vscode.ThemeIcon.File : vscode.ThemeIcon.Folder) : undefined,
+      resourceUri: vscode.Uri.file(path),
+      buttons: buttonArray,
+    }
   }
 }
 
@@ -477,3 +493,11 @@ export const ACTIONS: Readonly<Record<string, vscode.QuickInputButton>> = {
 } as const
 
 export type Action = keyof typeof ACTIONS
+
+/** Reusable {@link ACTIONS} combinations */
+const BUTTON_COMBOS = {
+  workspaceFile: [ACTIONS.workspaceOpen, ACTIONS.openSplit] as const,
+  workspaceDir: [ACTIONS.workspaceRemove, ACTIONS.openWindow] as const,
+  file: [ACTIONS.openSplit] as const,
+  dir: [ACTIONS.workspaceAdd, ACTIONS.openWindow] as const,
+} as const

@@ -46,6 +46,7 @@ export function activate(ctx: vscode.ExtensionContext) {
           ? path.dirname(activeFileName)
           : (workspacePath ?? variableExpansion(config.get('fallbackDirectory') as string)),
         prefixes,
+        icons: config.get('icons') as boolean,
         scanner: new PathScanner({
           exclude: config.get('exclude') as string[],
           maxCandidates: config.get('maxCandidates') as number,

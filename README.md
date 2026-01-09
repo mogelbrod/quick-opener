@@ -85,6 +85,8 @@ Example of how to define custom key bindings:
 - `quickOpener.exclude`: List of directory/file names to exclude from the results.
   Compared against the name of each path component.<br>
   _Default value:_ `["node_modules", ".git", ".DS_Store"]`
+- `quickOpener.icons`: Show or hide icons in the quick picker.<br>
+  _Default value:_ `true`
 - `quickOpener.timeout`: Maximum time (in ms) for scanner to run between input and showing results.
   Set to 0 to disable recursive search.<br>
   _Default value:_ `200`
