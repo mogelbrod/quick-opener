@@ -52,10 +52,10 @@ export function variableExpansionFactory() {
     execPath: '', // TODO:
     defaultBuildTask: '', // TODO:
     pathSeparator: path.sep,
-    '/': path.sep, // eslint-disable-line @typescript-eslint/naming-convention
+    '/': path.sep,
     config: (name: string) => vscode.workspace.getConfiguration().get(name, ''),
     env: (name: string) => process.env[name] || '',
-  } as const //satisfies Record<string, string | ((param: string, ...args: any[]) => string)>
+  } as const satisfies Record<string, string | ((param: string, ...args: any[]) => string)>
 
   return function variableExpansion(input: string, throwOnUnresolved = true) {
     const unresolved: string[] = []
