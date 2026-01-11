@@ -15,7 +15,8 @@
         "$tsc"
       ],
       "presentation": {
-        "clear": true
+        "clear": true,
+        "reveal": "silent"
       }
     },
     {
