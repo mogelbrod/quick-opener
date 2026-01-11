@@ -5,7 +5,7 @@ import path = require('path')
 type ScanWorker = Promise<ScanEntry>
 
 /** Object used to track directories that have been encountered, and possibly scanned */
-export type ScanEntry = {
+export interface ScanEntry {
   /** Absolute path to directory, always ends with a `path.sep` */
   path: string
   /** Time entry was created in UNIX milliseconds */
@@ -47,6 +47,15 @@ export class PathScanner {
    */
   dirTTL: number
 
+  /**
+   * Creates a new PathScanner instance with optional configuration.
+   *
+   * @param exclude - File/directory names to exclude from results
+   * @param maxCandidates - Maximum number of items to include in enumeration (0 = unlimited)
+   * @param maxDepth - Maximum directory recursion depth
+   * @param timeout - Maximum scan time in milliseconds
+   * @param dirTTL - Directory cache TTL in milliseconds
+   */
   constructor({
     exclude = DEFAULT_EXCLUDES as string[],
     maxCandidates = 0,
@@ -61,6 +70,15 @@ export class PathScanner {
     this.dirTTL = dirTTL
   }
 
+  /**
+   * Recursively scans a directory and returns a ScanEntry with discovered files and subdirectories.
+   *
+   * @param root - Starting directory path
+   * @param maxTime - Maximum time to spend scanning in milliseconds
+   * @param maxDepth - Maximum directory recursion depth
+   * @param depth - Current recursion depth
+   * @returns Promise resolving to a {@link ScanEntry} containing scan results
+   */
   async scan(
     root: string,
     { maxTime = this.timeout, maxDepth = this.maxDepth, depth = 0 } = {},
@@ -145,9 +163,14 @@ export class PathScanner {
       }))
   }
 
-  forEach(root: string | ScanEntry, callback: (pth: string, isDir: boolean) => void) {
+  /**
+   * Iterates through all files and directories in the scan results, invoking a callback for each.
+   *
+   * @param root - Root path or {@link ScanEntry} to start from
+   * @param callback - Function called for each item with path and directory flag
+   */
+  forEach(root: string | ScanEntry, callback: (pth: string, isDir: boolean) => void): void {
     const queue = [root && typeof root === 'object' ? root.path : root]
-    const result: string[] = []
     const seen = new Set<string>()
     let length = 0
 
@@ -186,10 +209,14 @@ export class PathScanner {
         }
       }
     }
-
-    return result
   }
 
+  /**
+   * Converts scan results to an array of paths.
+   *
+   * @param root - Root path or {@link ScanEntry} to convert
+   * @returns Array of file and directory paths
+   */
   toArray(root: string | ScanEntry): string[] {
     const result: string[] = []
     this.forEach(root, (pth, isDir) => {
@@ -198,10 +225,16 @@ export class PathScanner {
     return result
   }
 
-  /** Retrieve a scan entry from the cache */
+  /**
+   * Retrieve a scan entry from the cache, optionally creating it if missing.
+   *
+   * @param pth - Path to retrieve entry for
+   * @param createIfMissing - Whether to create entry if not found
+   * @returns `ScanEntry` from cache or undefined if not found
+   */
   getEntry(pth: string, createIfMissing: true): ScanEntry
-  getEntry(pth: string, createIfMissing?: false): ScanEntry
-  getEntry(pth: string, createIfMissing = false) {
+  getEntry(pth: string, createIfMissing?: false): ScanEntry | undefined
+  getEntry(pth: string, createIfMissing = false): ScanEntry | undefined {
     pth = this.ensureTrailingSep(pth)
     let entry = this.dirs.get(pth)
     if (entry && entry.timestamp + this.dirTTL > Date.now()) {
@@ -214,12 +247,22 @@ export class PathScanner {
     return entry
   }
 
-  /** Remove a scan entry from the cache */
+  /**
+   * Remove a scan entry from the cache.
+   *
+   * @param pth - Path to remove from cache
+   * @returns True if entry was deleted, false otherwise
+   */
   flushEntry(pth: string): boolean {
     return this.dirs.delete(this.ensureTrailingSep(pth))
   }
 
-  /** Utilize the scanner to determine if a path points to a directory */
+  /**
+   * Determines if a path points to a directory using the scanner cache or filesystem.
+   *
+   * @param pth - Path to check
+   * @returns Promise resolving to true if path is a directory, false otherwise
+   */
   async isDirectory(pth: string): Promise<boolean> {
     pth = this.ensureTrailingSep(pth)
     const entry = this.getEntry(pth)
@@ -238,6 +281,12 @@ export class PathScanner {
     return isDir
   }
 
+  /**
+   * Ensures a path ends with the platform-specific path separator.
+   *
+   * @param pth - Path to normalize
+   * @returns Path with trailing separator
+   */
   ensureTrailingSep(pth: string): string {
     return pth.endsWith(path.sep) ? pth : pth + path.sep
   }
