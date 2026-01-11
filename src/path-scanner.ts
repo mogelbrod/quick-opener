@@ -1,8 +1,7 @@
 import { readdir, stat } from 'fs/promises'
+import path from 'path'
 
-import path = require('path')
-
-type ScanWorker = Promise<ScanEntry>
+const SEP = path.sep
 
 /** Object used to track directories that have been encountered, and possibly scanned */
 export interface ScanEntry {
@@ -22,6 +21,8 @@ export interface ScanEntry {
    */
   worker?: ScanWorker
 }
+
+export type ScanWorker = Promise<ScanEntry>
 
 export const DEFAULT_EXCLUDES: readonly string[] = ['node_modules', '.git', '.DS_Store']
 
@@ -102,8 +103,6 @@ export class PathScanner {
 
     this.dirs.set(root, rootEntry)
 
-    const recursiveTimouts: any[] = []
-
     return (rootEntry.worker = readdir(root, { withFileTypes: true })
       .then(entries => {
         const timestampAfter = Date.now()
@@ -119,39 +118,25 @@ export class PathScanner {
           const childPath = root + entry.name
           const isDir = entry.isDirectory()
           if (isDir && remainingTime > 0 && maxDepth > depth && !this.getEntry(childPath)) {
-            // eslint-disable-next-line no-loop-func
-            workers.push(
-              new Promise((resolve, reject) => {
-                recursiveTimouts.push(
-                  setTimeout(() => {
-                    const remainingTime2 = timestamp + maxTime - Date.now()
-                    if (remainingTime2 <= 0) {
-                      resolve(undefined)
-                    } else {
-                      this.scan(childPath, {
-                        maxTime: remainingTime2,
-                        maxDepth,
-                        depth: depth + 1,
-                      }).then(resolve, reject)
-                    }
-                  }, depth + 1),
-                )
-              }),
-            )
+            const timeLeft = timestamp + maxTime - Date.now()
+            if (timeLeft > 0) {
+              workers.push(
+                this.scan(childPath, {
+                  maxTime: timeLeft,
+                  maxDepth,
+                  depth: depth + 1,
+                }),
+              )
+            }
           }
           rootEntry[isDir ? 'dirs' : 'files']!.push(childPath)
         }
 
-        return Promise.race([
-          new Promise(resolve => setTimeout(resolve, Math.max(0, remainingTime))),
-          Promise.allSettled(workers),
-        ]).then(() => {
-          // Clear any remaining timeouts
-          for (const t of recursiveTimouts) {
-            clearTimeout(t)
-          }
+        if (workers.length === 0) {
           return rootEntry
-        })
+        }
+
+        return Promise.allSettled(workers).then(() => rootEntry)
       })
       .catch((error: Error & { code?: string }) => {
         rootEntry.errored = true
@@ -220,7 +205,7 @@ export class PathScanner {
   toArray(root: string | ScanEntry): string[] {
     const result: string[] = []
     this.forEach(root, (pth, isDir) => {
-      result.push(isDir ? pth + path.sep : pth)
+      result.push(isDir ? pth + SEP : pth)
     })
     return result
   }
@@ -237,7 +222,7 @@ export class PathScanner {
   getEntry(pth: string, createIfMissing = false): ScanEntry | undefined {
     pth = this.ensureTrailingSep(pth)
     let entry = this.dirs.get(pth)
-    if (entry && entry.timestamp + this.dirTTL > Date.now()) {
+    if (entry && entry.timestamp + this.dirTTL < Date.now()) {
       entry.worker = undefined
     }
     if (!entry && createIfMissing) {
@@ -288,7 +273,7 @@ export class PathScanner {
    * @returns Path with trailing separator
    */
   ensureTrailingSep(pth: string): string {
-    return pth.endsWith(path.sep) ? pth : pth + path.sep
+    return pth.endsWith(SEP) ? pth : pth + SEP
   }
 }
 
