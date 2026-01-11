@@ -75,19 +75,25 @@
           "default": true,
           "order": 4
         },
+        "quickOpener.ripgrep": {
+          "description": "Use ripgrep for faster file discovery, when available.",
+          "type": "boolean",
+          "default": true,
+          "order": 5
+        },
         "quickOpener.timeout": {
           "description": "Maximum time (in ms) for scanner to run between input and showing results. Set to 0 to disable recursive search.",
           "type": "number",
           "default": 200,
           "minimum": 0,
-          "order": 5
+          "order": 6
         },
         "quickOpener.maxCandidates": {
           "description": "Maximum number of paths to include in the list VS Code fuzzy matches against. Lower values improve UI responsiveness at the risk of fewer nested directories being included in the list.",
           "type": "number",
           "default": 10000,
           "minimum": 100,
-          "order": 6
+          "order": 7
         }
       }
     },
@@ -163,5 +169,8 @@
     "semantic-release": "^25.0.2",
     "semantic-release-vsce": "^6.0.20",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@vscode/ripgrep": "^1.17.0"
   }
 }

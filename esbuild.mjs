@@ -15,7 +15,7 @@ const options = {
   platform: 'node',
   sourcemap: sourcemapArg?.split('=')[1] || 'linked',
   minify,
-  external: ['vscode'],
+  external: ['vscode', '@vscode/ripgrep'],
   entryPoints: ['./src/extension.ts'],
   outfile: './dist/extension.js',
   define: {

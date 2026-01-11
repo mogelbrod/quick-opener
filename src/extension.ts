@@ -1,8 +1,8 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
-import { PathScanner } from './path-scanner'
 import { sepRegex } from './path-utils'
 import { type Action, QuickOpener, updateContext } from './quick-opener'
+import { isRipgrepAvailable, ReaddirScanner, RipgrepScanner } from './scanner'
 import { variableExpansionFactory } from './variable-expansion'
 
 /** Currently visible instance of plugin */
@@ -40,6 +40,9 @@ export function activate(ctx: vscode.ExtensionContext) {
         Object.entries(config.get('prefixes') || {}).map(([k, v]) => [k, variableExpansion(v)]),
       )
 
+      const ScannerClass =
+        (config.get('ripgrep') as boolean) && isRipgrepAvailable() ? RipgrepScanner : ReaddirScanner
+
       instance = new QuickOpener({
         // Only use dir of active file when it looks like a valid path
         initial: activeFileName?.includes(path.sep)
@@ -47,7 +50,7 @@ export function activate(ctx: vscode.ExtensionContext) {
           : (workspacePath ?? variableExpansion(config.get('fallbackDirectory') as string)),
         prefixes,
         icons: config.get('icons') as boolean,
-        scanner: new PathScanner({
+        scanner: new ScannerClass({
           exclude: config.get('exclude') as string[],
           maxCandidates: config.get('maxCandidates') as number,
           timeout: config.get('timeout') as number,

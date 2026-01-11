@@ -2,15 +2,15 @@ import * as fs from 'fs/promises'
 import * as os from 'os'
 import * as path from 'path'
 import * as vscode from 'vscode'
-import { PathScanner, type ScanEntry } from './path-scanner'
 import * as putils from './path-utils'
+import type { ScanEntry, ScannerBase } from './scanner'
 
 export class QuickOpener {
   /** Quick pick instance */
   readonly qp = vscode.window.createQuickPick()
 
   /** Scanner instance */
-  readonly scanner: PathScanner
+  readonly scanner: ScannerBase
 
   /** Available path prefixes (prefix => substitution without /)*/
   readonly prefixes: Record<string, string>
@@ -33,24 +33,24 @@ export class QuickOpener {
   private updateCounter = 0
 
   constructor(options: {
+    /** Scanner instance */
+    scanner: ScannerBase
     /** Starting directory */
     initial?: string
     /** Available path prefixes */
     prefixes?: Record<string, string>
     /** Show icons in quick picker */
     icons?: boolean
-    /** Scanner instance */
-    scanner?: PathScanner
     /** Callback triggered when opener is disposed */
     onDispose?: () => void
   }) {
+    this.scanner = options.scanner
     this.prefixes = Object.assign({}, options.prefixes)
     this.prefixesArray = Object.keys(this.prefixes)
     this.prefixesArray.forEach(p => {
       this.prefixes[p] = putils.trimDirSuffix(this.prefixes[p])
     })
     this.icons = options.icons ?? true
-    this.scanner = options.scanner ?? new PathScanner()
     this.onDispose = options.onDispose
 
     this.updateRelative(options.initial || os.homedir())

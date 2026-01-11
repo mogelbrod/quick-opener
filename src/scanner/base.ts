@@ -1,11 +1,9 @@
-import { readdir, stat } from 'fs/promises'
+import * as path from 'path'
 
-import path = require('path')
-
-type ScanWorker = Promise<ScanEntry>
+export type ScanWorker = Promise<ScanEntry>
 
 /** Object used to track directories that have been encountered, and possibly scanned */
-export type ScanEntry = {
+export interface ScanEntry {
   /** Absolute path to directory, always ends with a `path.sep` */
   path: string
   /** Time entry was created in UNIX milliseconds */
@@ -25,7 +23,7 @@ export type ScanEntry = {
 
 export const DEFAULT_EXCLUDES: readonly string[] = ['node_modules', '.git', '.DS_Store']
 
-export class PathScanner {
+export abstract class ScannerBase {
   /** List of directory/file names to exclude from result lists. */
   exclude: Set<string>
 
@@ -61,89 +59,11 @@ export class PathScanner {
     this.dirTTL = dirTTL
   }
 
-  async scan(
+  /** Implementation specific recursive scanner */
+  abstract scan(
     root: string,
-    { maxTime = this.timeout, maxDepth = this.maxDepth, depth = 0 } = {},
-  ): ScanWorker {
-    root = this.normalizePath(root)
-
-    const timestamp = Date.now()
-    // console.log('scan', root, maxTime)
-
-    const rootEntry = this.getEntry(root, true)
-    if (rootEntry.worker) {
-      return rootEntry.worker
-    }
-
-    // Reset entry in preparation for scan
-    Object.assign(rootEntry, {
-      timestamp,
-      dirs: [],
-      files: [],
-    })
-
-    this.dirs.set(root, rootEntry)
-
-    const recursiveTimouts: any[] = []
-
-    return (rootEntry.worker = readdir(root, { withFileTypes: true })
-      .then(entries => {
-        const timestampAfter = Date.now()
-        const remainingTime = timestamp + maxTime - timestampAfter
-        // console.log('done', root, remainingTime, entries.length)
-
-        const workers: Promise<any>[] = []
-
-        for (const entry of entries) {
-          if (this.exclude.has(entry.name)) {
-            continue
-          }
-          const childPath = root + entry.name
-          const isDir = entry.isDirectory()
-          if (isDir && remainingTime > 0 && maxDepth > depth && !this.getEntry(childPath)) {
-            // eslint-disable-next-line no-loop-func
-            workers.push(
-              new Promise((resolve, reject) => {
-                recursiveTimouts.push(
-                  setTimeout(() => {
-                    const remainingTime2 = timestamp + maxTime - Date.now()
-                    if (remainingTime2 <= 0) {
-                      resolve(undefined)
-                    } else {
-                      this.scan(childPath, {
-                        maxTime: remainingTime2,
-                        maxDepth,
-                        depth: depth + 1,
-                      }).then(resolve, reject)
-                    }
-                  }, depth + 1),
-                )
-              }),
-            )
-          }
-          rootEntry[isDir ? 'dirs' : 'files']!.push(childPath)
-        }
-
-        return Promise.race([
-          new Promise(resolve => setTimeout(resolve, Math.max(0, remainingTime))),
-          Promise.allSettled(workers),
-        ]).then(() => {
-          // Clear any remaining timeouts
-          for (const t of recursiveTimouts) {
-            clearTimeout(t)
-          }
-          return rootEntry
-        })
-      })
-      .catch((error: Error & { code?: string }) => {
-        rootEntry.errored = true
-        // Re-throw errors that don't appear to be file system errors
-        if (!error.code) {
-          throw error
-        }
-        return rootEntry
-      }))
-  }
+    options?: { maxTime?: number; maxDepth?: number; depth?: number },
+  ): ScanWorker
 
   forEach(root: string | ScanEntry, callback: (pth: string, isDir: boolean) => void) {
     const queue = [root && typeof root === 'object' ? root.path : root]
@@ -200,7 +120,7 @@ export class PathScanner {
 
   /** Retrieve a scan entry from the cache */
   getEntry(pth: string, createIfMissing: true): ScanEntry
-  getEntry(pth: string, createIfMissing?: false): ScanEntry
+  getEntry(pth: string, createIfMissing?: false): ScanEntry | undefined
   getEntry(pth: string, createIfMissing = false) {
     pth = this.normalizePath(pth)
     let entry = this.dirs.get(pth)
@@ -220,33 +140,9 @@ export class PathScanner {
   }
 
   /** Utilize the scanner to determine if a path points to a directory */
-  async isDirectory(pth: string): Promise<boolean> {
-    pth = this.normalizePath(pth)
-    const entry = this.getEntry(pth)
-    let isDir = !!entry
-    // Check if the path points to a directory
-    // If so store it as an unscanned entry to enable later lookups
-    if (!isDir) {
-      isDir = await stat(pth)
-        .then(x => x.isDirectory())
-        .catch(() => false)
-      if (isDir) {
-        // Create entry if it hasn't been created during the async stat call
-        this.getEntry(pth, true)
-      }
-    }
-    return isDir
-  }
+  abstract isDirectory(pth: string): Promise<boolean>
 
   normalizePath(pth: string): string {
     return pth.endsWith(path.sep) ? pth : pth + path.sep
   }
-}
-
-// Lightweight test runner
-if (require.main === module) {
-  const pe = new PathScanner()
-  pe.scan(process.cwd()).then(res => {
-    console.log(pe.toArray(res))
-  })
 }
