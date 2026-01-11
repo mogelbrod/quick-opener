@@ -65,7 +65,7 @@ export class PathScanner {
     root: string,
     { maxTime = this.timeout, maxDepth = this.maxDepth, depth = 0 } = {},
   ): ScanWorker {
-    root = this.normalizePath(root)
+    root = this.ensureTrailingSep(root)
 
     const timestamp = Date.now()
     // console.log('scan', root, maxTime)
@@ -202,7 +202,7 @@ export class PathScanner {
   getEntry(pth: string, createIfMissing: true): ScanEntry
   getEntry(pth: string, createIfMissing?: false): ScanEntry
   getEntry(pth: string, createIfMissing = false) {
-    pth = this.normalizePath(pth)
+    pth = this.ensureTrailingSep(pth)
     let entry = this.dirs.get(pth)
     if (entry && entry.timestamp + this.dirTTL > Date.now()) {
       entry.worker = undefined
@@ -216,12 +216,12 @@ export class PathScanner {
 
   /** Remove a scan entry from the cache */
   flushEntry(pth: string): boolean {
-    return this.dirs.delete(this.normalizePath(pth))
+    return this.dirs.delete(this.ensureTrailingSep(pth))
   }
 
   /** Utilize the scanner to determine if a path points to a directory */
   async isDirectory(pth: string): Promise<boolean> {
-    pth = this.normalizePath(pth)
+    pth = this.ensureTrailingSep(pth)
     const entry = this.getEntry(pth)
     let isDir = !!entry
     // Check if the path points to a directory
@@ -238,7 +238,7 @@ export class PathScanner {
     return isDir
   }
 
-  normalizePath(pth: string): string {
+  ensureTrailingSep(pth: string): string {
     return pth.endsWith(path.sep) ? pth : pth + path.sep
   }
 }
