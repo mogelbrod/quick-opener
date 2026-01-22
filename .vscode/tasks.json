@@ -11,9 +11,7 @@
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": [
-        "$tsc"
-      ],
+      "problemMatcher": ["$tsc"],
       "presentation": {
         "clear": true,
         "reveal": "silent"
@@ -25,7 +23,7 @@
       "script": "build:watch",
       "isBackground": true,
       "group": {
-        "kind": "build",
+        "kind": "build"
       },
       "problemMatcher": {
         "pattern": {
@@ -43,8 +41,8 @@
         }
       },
       "presentation": {
-        "reveal": "never",
-      },
+        "reveal": "never"
+      }
     },
     {
       "label": "check",
@@ -55,10 +53,7 @@
         {
           "owner": "biome",
           "source": "biome",
-          "fileLocation": [
-            "relative",
-            "${workspaceFolder}"
-          ],
+          "fileLocation": ["relative", "${workspaceFolder}"],
           "pattern": {
             "regexp": "^(\\w+)\\s+\\((\\d+),(\\d+)\\):\\s+(error|warning)\\s+(.*)$",
             "file": 1,
@@ -66,13 +61,13 @@
             "endLine": 3,
             "severity": 4,
             "message": 5
-          },
+          }
         }
       ],
       "presentation": {
         "reveal": "silent",
         "revealProblems": "onProblem",
-        "clear": true,
+        "clear": true
       }
     },
     {
@@ -82,10 +77,7 @@
       "problemMatcher": {
         "owner": "biome",
         "source": "biome",
-        "fileLocation": [
-          "relative",
-          "${workspaceFolder}"
-        ],
+        "fileLocation": ["relative", "${workspaceFolder}"],
         "pattern": {
           "regexp": "^(.+?):(\\d+):(\\d+)\\s+(error|warning)\\b\\s+(.*)$",
           "file": 1,

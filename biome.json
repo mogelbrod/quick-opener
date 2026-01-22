@@ -7,7 +7,7 @@
   },
   "formatter": {
     "enabled": true,
-    "formatWithErrors": false,
+    "formatWithErrors": true,
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
@@ -42,6 +42,6 @@
     }
   },
   "files": {
-    "includes": ["src/**", "*.js", "*.json"]
+    "includes": ["src/**", "test/**", ".vscode/**", "*.js", "*.json", "*.ts"]
   }
 }

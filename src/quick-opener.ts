@@ -70,14 +70,12 @@ export class QuickOpener {
 
   /** Show the quick picker */
   show() {
-    updateContext(true)
     this.updateItems()
     this.qp.show()
   }
 
   /** Hide/discard the quick picker */
   dispose() {
-    updateContext(false)
     this.onDispose?.()
     this.qp.dispose()
   }
@@ -138,7 +136,7 @@ export class QuickOpener {
   }
 
   /** Regenerate cached list of workspace folders */
-  updateWorkspacePaths() {
+  private updateWorkspacePaths() {
     return (this.workspacePaths = new Set(
       vscode.workspace.workspaceFolders?.map(x => x.uri.fsPath) ?? [],
     ))
@@ -272,7 +270,7 @@ export class QuickOpener {
   }
 
   /** Handle quick pick accept events */
-  async onAccept() {
+  private async onAccept() {
     const input = this.qp.value
     const selected = this.qp.selectedItems[0]
 
@@ -307,7 +305,7 @@ export class QuickOpener {
   }
 
   /** Handle quick pick button and item button events */
-  async onAction(value: string, button: vscode.QuickInputButton) {
+  private async onAction(value: string, button: vscode.QuickInputButton) {
     const target = this.resolveRelative(value)
     const stat = await fs.stat(target).catch(() => null)
     const uri = vscode.Uri.file(target)
@@ -445,11 +443,6 @@ export class QuickOpener {
       buttons: buttonArray,
     }
   }
-}
-
-/** Manages vscode context value for plugin */
-export function updateContext(enabled: boolean) {
-  vscode.commands.executeCommand('setContext', 'inQuickOpener', enabled)
 }
 
 /** Actions available for quick pick window/items */

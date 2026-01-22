@@ -14,12 +14,10 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "editor.codeActionsOnSave": {
-    "quickfix.biome": "explicit",
+    "source.biome": "always",
     "source.organizeImports.biome": "explicit"
   },
-  "editor.rulers": [
-    100
-  ],
+  "editor.rulers": [100],
   "files.exclude": {
     "out": true,
     "dist": false
@@ -31,4 +29,13 @@
   },
   "typescript.tsc.autoDetect": "off",
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+  "mochaExplorer.launcherScript": "node_modules/mocha-explorer-launcher-scripts/vscode-test",
+  "mochaExplorer.ui": "tdd",
+  "mochaExplorer.autoload": false,
+  "mochaExplorer.ipcRole": "server",
+  "mochaExplorer.ipcTimeout": 10000,
+  "mochaExplorer.env": {
+    "VSCODE_VERSION": "stable",
+    "ELECTRON_RUN_AS_NODE": null
+  }
 }

@@ -3,15 +3,18 @@ import path from 'path'
 
 const SEP = path.sep
 
-/** Object used to track directories that have been encountered, and possibly scanned */
+/**
+ * Object used to track directories that have been encountered, and possibly scanned.
+ * Use the associated scanner `forEach()` or `toArray()` methods to iterate through entries recursively.
+ */
 export interface ScanEntry {
   /** Absolute path to directory, always ends with a `path.sep` */
   path: string
   /** Time entry was created in UNIX milliseconds */
   timestamp: number
-  /** Directories found in `path` */
+  /** Directories found in `path` (not recursive) */
   dirs?: string[]
-  /** Files found in `path` */
+  /** Files found in `path` (not recursive) */
   files?: string[]
   /** Encountered error while scanning? */
   errored?: boolean

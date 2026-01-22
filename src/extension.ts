@@ -2,13 +2,18 @@ import * as path from 'path'
 import * as vscode from 'vscode'
 import { PathScanner } from './path-scanner'
 import { sepRegex } from './path-utils'
-import { type Action, QuickOpener, updateContext } from './quick-opener'
+import { type Action, QuickOpener } from './quick-opener'
 import { variableExpansionFactory } from './variable-expansion'
 
 /** Currently visible instance of plugin */
 let instance: QuickOpener | null = null
 
 export function activate(ctx: vscode.ExtensionContext) {
+  /** Manages vscode context value for plugin */
+  function updateContext(enabled: boolean) {
+    vscode.commands.executeCommand('setContext', 'inQuickOpener', enabled)
+  }
+
   // Initialize vscode context value
   updateContext(false)
 
@@ -54,11 +59,13 @@ export function activate(ctx: vscode.ExtensionContext) {
           dirTTL: 30e3,
         }),
         onDispose: () => {
+          updateContext(false)
           instance = null
         },
       })
 
       instance.show()
+      updateContext(true)
     }),
   )
 

@@ -95,6 +95,22 @@
       {
         "command": "quickOpener.show",
         "title": "Quick Open Path"
+      },
+      {
+        "command": "quickOpener.popPath",
+        "title": "Quick Opener: Pop Last Input Segment"
+      },
+      {
+        "command": "quickOpener.triggerAction",
+        "title": "Quick Opener: Trigger Action for Current Input"
+      },
+      {
+        "command": "quickOpener.triggerItemAction",
+        "title": "Quick Opener: Trigger Item Action for Selected Item"
+      },
+      {
+        "command": "quickOpener.triggerTabCompletion",
+        "title": "Quick Opener: Trigger Tab Completion"
       }
     ],
     "keybindings": [
@@ -140,28 +156,40 @@
     ]
   },
   "scripts": {
-    "clean": "rimraf dist quickopener-*.vsix .vscode-test",
+    "clean": "rimraf dist test/dist quickopener-*.vsix .vscode-test",
     "build": "./esbuild.mjs",
     "build:watch": "./esbuild.mjs --watch",
     "package": "npm run clean && ./esbuild.mjs --minify",
     "vscode:prepublish": "npm run package",
-    "check": "tsc --noEmit; biome check",
+    "check": "tsc; tsc -p ./test; biome check",
     "fix": "biome check --write",
     "validate": "npm run check && vsce ls",
-    "release": "npm run validate && npm run package && semantic-release --no-ci"
+    "release": "npm run validate && npm run package && semantic-release --no-ci",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run",
+    "test:watch": "vitest watch",
+    "test:e2e": "npm run build && vscode-test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.10",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@types/node": "25.x",
+    "@types/sinon": "^21.0.0",
     "@types/vscode": "^1.108.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
     "conventional-changelog-conventionalcommits": "^9.1.0",
     "esbuild": "^0.27.2",
+    "mocha-explorer-launcher-scripts": "^0.4.0",
     "rimraf": "^6.1.2",
     "semantic-release": "^25.0.2",
     "semantic-release-vsce": "^6.0.20",
-    "typescript": "^5.9.3"
+    "sinon": "^21.0.1",
+    "source-map-support": "^0.5.21",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }
