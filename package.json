@@ -28,7 +28,7 @@
   "publisher": "mogelbrod",
   "author": "Victor Hallberg <victor@hallberg.cc>",
   "license": "MIT",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "engines": {
     "vscode": "^1.108.0",
     "node": ">=18.0.0"
@@ -163,7 +163,7 @@
     "vscode:prepublish": "npm run package",
     "check": "tsc; tsc -p ./test; biome check",
     "fix": "biome check --write",
-    "validate": "npm run check && vsce ls",
+    "validate": "npm run check && npm test && vsce ls",
     "release": "npm run validate && npm run package && semantic-release --no-ci",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run",

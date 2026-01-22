@@ -1,3 +1,17 @@
+## [0.6.0](https://github.com/mogelbrod/quick-opener/compare/v0.5.2...v0.6.0) (2026-01-22)
+
+### Features
+
+* Add file/folder icons to quick picker items, controlled via `quickOpener.icons` setting ([d4f58d0](https://github.com/mogelbrod/quick-opener/commit/d4f58d05ff77f3ab3d78b93e3aef318a3e5a0e94))
+
+### Performance Improvements
+
+* **path-scanner:** Improve scanner speed ([2e6994a](https://github.com/mogelbrod/quick-opener/commit/2e6994a68a285cef8545a89ffa5cb659f8fda342))
+
+### Code Refactoring
+
+* Rename normalizePath to ensureTrailingSep for clarity ([eb576ac](https://github.com/mogelbrod/quick-opener/commit/eb576ac58f5bd3c2a6fd6302d5499bc3c6bd157a))
+
 ## [0.5.2](https://github.com/mogelbrod/quick-opener/compare/v0.5.1...v0.5.2) (2025-12-26)
 
 ### Bug Fixes
