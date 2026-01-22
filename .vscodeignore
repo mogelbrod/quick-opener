@@ -1,11 +1,8 @@
 **/*.map
 **/*.ts
 **/tsconfig.json
-.gitignore
-.tool-versions
-.vscode-test/**
+.*
 .vscode/**
-.yarnrc
 biome.json
 esbuild.mjs
 node_modules/**
