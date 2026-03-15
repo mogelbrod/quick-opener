@@ -12,6 +12,8 @@ A plugin that makes it easy to open files outside the VS Code workspace
 
 Keybindings on Mac use <kbd>⌘</kbd> in place of <kbd>Ctrl</kbd>.
 
+### Open/create any local file
+
 - Show the Quick Opener picker by pressing <kbd>Ctrl</kbd>-<kbd>O</kbd>
 - Open any path across the file system using only the keyboard (no more pesky native file system popups!)
 - Fuzzy path matching using the built-in VS Code fuzzy matcher
@@ -27,6 +29,22 @@ Keybindings on Mac use <kbd>⌘</kbd> in place of <kbd>Ctrl</kbd>.
     with ancestor directories created in the process
   - <kbd>Tab</kbd> - Replace input value with selected item
 
+### Open by git ref/revision
+
+Browse and open files as they existed from any git branch, tag, or commit SHA via the
+`quickOpener.showRevisionPicker` command ("Quick Opener: Open by Revision").
+
+- Lists all local/remote branches and tags, grouped by type
+- Type any commit SHA to use it directly without selecting from the list
+- Selecting a ref opens a file revision picker, enabling opening of any file that existed in that ref
+- Additional functionality available via item buttons for each ref:
+  - _Open changes_ — open a multi-diff view of all changes in the given ref (default hotkey: <kbd>Ctrl</kbd>-<kbd>O</kbd>)
+  - _Diff against HEAD_ — open a multi-diff view comparing that ref to `HEAD` (default hotkey: <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>O</kbd>)
+- Toggle visibility of additional metadata via the title bar buttons
+  - _Toggle description format_ — select between showing short SHA or custom metadata (default hotkey: <kbd>Ctrl</kbd>-<kbd>D</kbd>)
+  - _Toggle commit message visibility_ — show/hide most recent commit title (default hotkey: <kbd>Ctrl</kbd>-<kbd>M</kbd>)
+- Customize metadata format via `quickOpener.refDescriptionFormat` setting
+
 ## Installation
 
 1. Navigate to the Quick Opener extension page within VS Code by either:
@@ -34,6 +52,7 @@ Keybindings on Mac use <kbd>⌘</kbd> in place of <kbd>Ctrl</kbd>.
      and pressing the _Install_ button (this should open VS Code)
    - Searching for `mogelbrod.quickopener` from the VS Code _Extensions_ sidebar
 2. Press the corresponding _Install_ button
+3. (optional) Configure keybindings - see below for examples
 
 ## Extension contributions
 
@@ -62,48 +81,95 @@ Example of how to define custom key bindings:
 
 ```jsonc
   {
-    "when": "inQuickOpener", // limit binding to when plugin is visible
+    "when": "inQuickOpener", // when any quick picker is visible
     "command": "quickOpener.triggerItemAction",
     "args": 1, // trigger first visible action for item (depends on item type)
-    // "args": 2, // OR trigger second visible action for item (depends on item type)
-    "key": "ctrl+shift+o",
+    "key": "ctrl+t",
   },
   {
-    "when": "inQuickOpener",
+    "when": "inQuickOpener == 'revision'", // when revision picker is visible
     "command": "quickOpener.triggerAction",
-    "args": ["create"], // create file/directory
-    "key": "ctrl+n",
+    "args": "toggleMessage", // toggle commit message visibility
+    "key": "ctrl+m",
   }
 ```
 
 ### Settings
 
 - `quickOpener.fallbackDirectory`: Directory to start in when there's no workspace/file open in the editor. Supports [vscode variables](https://code.visualstudio.com/docs/editor/variables-reference).<br>
+  <small>
   _Default value:_ `"${userHome}"`
+  </small>
 - `quickOpener.prefixes`: Mapping of path prefixes to their expanded paths. A path starting with any of these strings followed by a directory separator will be expanded to the corresponding path. Supports [vscode variables](https://code.visualstudio.com/docs/editor/variables-reference).<br>
+  <small>
   _Default value:_ `{ "~": "${userHome}", "@": "${workspaceFolder}" }`
+  </small>
 - `quickOpener.exclude`: List of directory/file names to exclude from the results.
   Compared against the name of each path component.<br>
+  <small>
   _Default value:_ `["node_modules", ".git", ".DS_Store"]`
+  </small>
 - `quickOpener.icons`: Show or hide icons in the quick picker.<br>
+  <small>
   _Default value:_ `true`
+  </small>
 - `quickOpener.timeout`: Maximum time (in ms) for scanner to run between input and showing results.
   Set to 0 to disable recursive search.<br>
+  <small>
   _Default value:_ `200`
+  </small>
 - `quickOpener.maxCandidates`: Maximum number of paths to include in the list VS Code fuzzy matches against.
   Lower values improve UI responsiveness at the risk of fewer nested directories being included in the list.<br>
+  <small>
   _Default value:_ `10000`
+  </small>
+- `quickOpener.refDescriptionFormat`: Format string for revision descriptions in the "Open by Revision" picker
+  when the _custom_ description style is active (toggled via the info button in the picker).<br>
+  <small>
+  _Default value:_ `"{commitDate} - {authorName}"`<br>
+  Available placeholders:
+  - `{name}`
+  - `{commit}`
+  - `{message}`
+  - `{authorName}`
+  - `{authorEmail}`
+  - `{authorDate}`
+  - `{commitDate}`
+
+  Date keys support optional formatting, e.g. `{commitDate:YYYY-MM-DD}`. Supported date tokens:
+  - `YYYY` / `YY`
+  - `MMM` / `MM`
+  - `DD` / `D`
+  - `HH` / `H`
+  - `mm`
+  - `ss`
+    </small>
 
 ### Commands
 
 - `quickOpener.show`: Show the Quick Opener picker.
+- `quickOpener.showRevisionPicker`: Show the "Open by Revision" picker, listing all git branches and tags.
+  Selecting a ref opens the "Open File at Revision" picker for that ref.<br>
+  <small>
+  Accepts an optional options object argument:
+  - `initialValue = ''` — pre-fill the search input
+  - `branches = true` — include branches in the list
+  - `tags = true` — include tags in the list
+    </small>
+- `quickOpener.showRevisionFilePicker`: Show a picker listing all files at a given git ref.<br>
+  <small>
+  Accepts two optional arguments:
+  - `ref = 'HEAD'` — branch name, tag, or commit SHA to list files from
+  - `options`:
+    - `initialValue?: string` — pre-fill the search input
+      </small>
 
 Commands available while the plugin window is visible:
 
-- `quickOpener.popPath`: Go upwards in the path by chopping off the last part of the input (if present), or by navigating to parent directory.
-- `quickOpener.triggerAction`: Trigger an action using the current input as path.
-- `quickOpener.triggerItemAction`: Trigger an action using the currently selected item as path.
+- `quickOpener.triggerAction`: Trigger a window action.
+- `quickOpener.triggerItemAction`: Trigger an action for the currently selected item.
 - `quickOpener.triggerTabCompletion`: Replace the input value with the selected item path.
+- `quickOpener.popPath`: Go upwards in the path by chopping off the last part of the input (if present), or by navigating to parent directory.
 
 ## Disclaimer
 

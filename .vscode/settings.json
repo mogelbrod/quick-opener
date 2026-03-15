@@ -27,8 +27,8 @@
     "dist": true,
     "node_modules": true
   },
-  "typescript.tsc.autoDetect": "off",
-  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+  "js/ts.tsc.autoDetect": "off",
+  "js/ts.tsserver.experimental.enableProjectDiagnostics": true,
   "mochaExplorer.launcherScript": "node_modules/mocha-explorer-launcher-scripts/vscode-test",
   "mochaExplorer.ui": "tdd",
   "mochaExplorer.autoload": false,

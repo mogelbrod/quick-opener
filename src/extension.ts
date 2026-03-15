@@ -1,21 +1,27 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
+import { type Opener, setOpenerContext } from './opener'
 import { PathScanner } from './path-scanner'
 import { sepRegex } from './path-utils'
-import { type Action, QuickOpener } from './quick-opener'
+import { QuickOpener } from './quick-opener'
+import { RevisionFileOpener } from './revision-file-opener'
+import { RevisionOpener } from './revision-opener'
+import { setGlobalState } from './utils'
 import { variableExpansionFactory } from './variable-expansion'
 
 /** Currently visible instance of plugin */
-let instance: QuickOpener | null = null
+let instance: Opener | null = null
 
+/** VS Code extension activation entry point – registers all commands. */
 export function activate(ctx: vscode.ExtensionContext) {
-  /** Manages vscode context value for plugin */
-  function updateContext(enabled: boolean) {
-    vscode.commands.executeCommand('setContext', 'inQuickOpener', enabled)
-  }
-
   // Initialize vscode context value
-  updateContext(false)
+  setOpenerContext(false)
+  setGlobalState(ctx)
+
+  const onDispose = () => {
+    setOpenerContext(false)
+    instance = null
+  }
 
   ctx.subscriptions.push(
     vscode.commands.registerCommand('quickOpener.show', () => {
@@ -58,21 +64,41 @@ export function activate(ctx: vscode.ExtensionContext) {
           timeout: config.get('timeout') as number,
           dirTTL: 30e3,
         }),
-        onDispose: () => {
-          updateContext(false)
-          instance = null
-        },
+        onDispose,
       })
 
       instance.show()
-      updateContext(true)
+      setOpenerContext('quick')
+    }),
+  )
+
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand('quickOpener.showRevisionPicker', options => {
+      instance = new RevisionOpener({
+        ...options,
+        onDispose,
+        onAccept: ref => {
+          instance = new RevisionFileOpener(ref, { onDispose })
+          instance.show()
+        },
+      })
+      instance.show()
+      setOpenerContext('revision')
+    }),
+  )
+
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand('quickOpener.showRevisionFilePicker', (inputRef, options) => {
+      instance = new RevisionFileOpener(inputRef, { ...options, onDispose })
+      instance.show()
+      setOpenerContext('revision-file')
     }),
   )
 
   ctx.subscriptions.push(
     vscode.commands.registerCommand(
       'quickOpener.triggerAction',
-      (actionOrOffset?: number | Action) => {
+      (actionOrOffset?: number | string) => {
         instance?.triggerAction(actionOrOffset ?? 1)
       },
     ),
@@ -81,21 +107,24 @@ export function activate(ctx: vscode.ExtensionContext) {
   ctx.subscriptions.push(
     vscode.commands.registerCommand(
       'quickOpener.triggerItemAction',
-      (actionOrOffset?: number | Action) => {
+      (actionOrOffset?: number | string) => {
         instance?.triggerItemAction(actionOrOffset ?? 1)
       },
     ),
   )
 
   ctx.subscriptions.push(
-    vscode.commands.registerCommand('quickOpener.popPath', () => instance?.popPath()),
+    vscode.commands.registerCommand('quickOpener.popPath', () => {
+      if (instance instanceof QuickOpener) instance.popPath()
+    }),
   )
 
   ctx.subscriptions.push(
-    vscode.commands.registerCommand('quickOpener.triggerTabCompletion', () =>
-      instance?.triggerTabCompletion(),
-    ),
+    vscode.commands.registerCommand('quickOpener.triggerTabCompletion', () => {
+      if (instance instanceof QuickOpener) instance.triggerTabCompletion()
+    }),
   )
 }
 
+/** VS Code extension deactivation hook. */
 export function deactivate() {}

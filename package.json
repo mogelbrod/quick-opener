@@ -88,6 +88,12 @@
           "default": 10000,
           "minimum": 100,
           "order": 6
+        },
+        "quickOpener.refDescriptionFormat": {
+          "description": "Format string for revision descriptions in 'Open File by Revision' picker when the 'custom' description style is active (toggled via the info button in the ref picker). Available placeholders: {name}, {commit}, {message}, {authorName}, {authorEmail}, {authorDate}, {commitDate}. {*Date} keys support optional formatting: {commitDate:YYYY-MM-DD}. Supported date tokens: YYYY, YY, MMM, MM, DD, D, HH, H, mm, ss",
+          "type": "string",
+          "default": "{commitDate} - {authorName}",
+          "order": 7
         }
       }
     },
@@ -111,6 +117,14 @@
       {
         "command": "quickOpener.triggerTabCompletion",
         "title": "Quick Opener: Trigger Tab Completion"
+      },
+      {
+        "command": "quickOpener.showRevisionFilePicker",
+        "title": "Quick Opener: Open File at Revision"
+      },
+      {
+        "command": "quickOpener.showRevisionPicker",
+        "title": "Quick Opener: Open by Revision"
       }
     ],
     "keybindings": [
@@ -118,12 +132,6 @@
         "command": "quickOpener.show",
         "key": "ctrl+o",
         "mac": "cmd+o"
-      },
-      {
-        "when": "inQuickOpener",
-        "command": "quickOpener.popPath",
-        "key": "ctrl+u",
-        "mac": "cmd+u"
       },
       {
         "when": "inQuickOpener",
@@ -140,18 +148,36 @@
         "mac": "cmd+shift+o"
       },
       {
-        "when": "inQuickOpener",
+        "when": "inQuickOpener == 'quick'",
+        "command": "quickOpener.popPath",
+        "key": "ctrl+u",
+        "mac": "cmd+u"
+      },
+      {
+        "when": "inQuickOpener == 'quick'",
         "command": "quickOpener.triggerAction",
-        "args": [
-          "create"
-        ],
+        "args": "create",
         "key": "ctrl+n",
         "mac": "cmd+n"
       },
       {
-        "when": "inQuickOpener && inputFocus",
+        "when": "inQuickOpener == 'quick' && inputFocus",
         "command": "quickOpener.triggerTabCompletion",
         "key": "tab"
+      },
+      {
+        "when": "inQuickOpener == 'revision'",
+        "command": "quickOpener.triggerAction",
+        "args": "toggleDescription",
+        "key": "ctrl+d",
+        "mac": "cmd+d"
+      },
+      {
+        "when": "inQuickOpener == 'revision'",
+        "command": "quickOpener.triggerAction",
+        "args": "toggleMessage",
+        "key": "ctrl+m",
+        "mac": "cmd+m"
       }
     ]
   },

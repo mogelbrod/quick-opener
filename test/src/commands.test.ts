@@ -11,7 +11,7 @@ describe('commands', () => {
       await vscode.commands.executeCommand('quickOpener.show')
       await new Promise(resolve => setTimeout(resolve, 10))
       // TODO: This fails when triggered through mocha test explorer in vscode
-      assert.ok(execStub.calledWith('setContext', 'inQuickOpener', true))
+      assert.ok(execStub.calledWith('setContext', 'inQuickOpener', 'quick'))
     } finally {
       execStub.restore()
     }

@@ -25,6 +25,13 @@
       "style": {
         "noNonNullAssertion": "off",
         "noParameterAssign": "off",
+        "useShorthandAssign": "error",
+        "useConsistentObjectDefinitions": {
+          "level": "warn",
+          "options": {
+            "syntax": "shorthand"
+          }
+        },
         "useNodejsImportProtocol": "off"
       },
       "suspicious": {

@@ -2,9 +2,11 @@ import * as fs from 'fs/promises'
 import * as os from 'os'
 import * as path from 'path'
 import * as vscode from 'vscode'
+import { getButtonAction } from './opener'
 import { PathScanner, type ScanEntry } from './path-scanner'
 import * as putils from './path-utils'
 
+/** Quick picker for navigating the filesystem and opening files by path. */
 export class QuickOpener {
   /** Quick pick instance */
   readonly qp = vscode.window.createQuickPick()
@@ -69,37 +71,27 @@ export class QuickOpener {
   }
 
   /** Show the quick picker */
-  show() {
+  show(): void {
     this.updateItems()
     this.qp.show()
   }
 
   /** Hide/discard the quick picker */
-  dispose() {
+  dispose(): void {
     this.onDispose?.()
     this.qp.dispose()
   }
 
-  /** Manually trigger an action */
-  triggerAction(actionOrOffset: number | Action) {
-    const action =
-      typeof actionOrOffset === 'number'
-        ? this.qp.buttons?.[actionOrOffset - 1]
-        : ACTIONS[actionOrOffset]
-    if (!action) {
-      const actionStr = JSON.stringify(action)
-      throw new Error(`Quick Opener: Expected valid action as argument (got '${actionStr}')`)
-    }
+  /** Manually trigger a title button action */
+  triggerAction(actionOrOffset: number | ActionId): void {
+    const action = getButtonAction(actionOrOffset, this.qp.buttons, ACTIONS)
     this.onAction(this.qp.value, action)
   }
 
   /** Manually trigger an item action */
-  triggerItemAction(actionOrOffset: number | Action) {
+  triggerItemAction(actionOrOffset: number | ActionId): void {
     const selected = this.qp.activeItems[0]
-    const action =
-      typeof actionOrOffset === 'number'
-        ? selected?.buttons?.[actionOrOffset - 1]
-        : ACTIONS[actionOrOffset]
+    const action = getButtonAction(actionOrOffset, selected.buttons, ACTIONS)
     if (action) {
       this.onAction(selected.label, action)
     }
@@ -311,7 +303,7 @@ export class QuickOpener {
     const uri = vscode.Uri.file(target)
     console.log(`Executing action`, { value, target })
 
-    switch (button) {
+    switch (button as Action) {
       case ACTIONS.create:
       case ACTIONS.createDirectory:
       case ACTIONS.createFile: {
@@ -446,7 +438,7 @@ export class QuickOpener {
 }
 
 /** Actions available for quick pick window/items */
-export const ACTIONS: Readonly<Record<string, vscode.QuickInputButton>> = {
+export const ACTIONS = {
   create: {
     tooltip: 'Create new file/directory using input as path',
     iconPath: new vscode.ThemeIcon('new-file'),
@@ -483,12 +475,15 @@ export const ACTIONS: Readonly<Record<string, vscode.QuickInputButton>> = {
     tooltip: 'Remove from workspace',
     iconPath: new vscode.ThemeIcon('close'),
   },
-} as const
+} as const satisfies Record<string, vscode.QuickInputButton>
 
-export type Action = keyof typeof ACTIONS
+/** String union of all valid {@link ACTIONS} keys. */
+export type ActionId = keyof typeof ACTIONS
+/** Union type of all available quick pick button action objects. */
+export type Action = (typeof ACTIONS)[ActionId]
 
 /** Reusable {@link ACTIONS} combinations */
-const BUTTON_COMBOS = {
+export const BUTTON_COMBOS = {
   workspaceFile: [ACTIONS.workspaceOpen, ACTIONS.openSplit] as const,
   workspaceDir: [ACTIONS.workspaceRemove, ACTIONS.openWindow] as const,
   file: [ACTIONS.openSplit] as const,
