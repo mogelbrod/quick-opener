@@ -103,6 +103,32 @@ Example of how to define custom key bindings:
   }
 ```
 
+### Commands
+
+- `quickOpener.show`: Show the Quick Opener picker.
+- `quickOpener.showRevisionPicker`: Show the "Open by Revision" picker, listing all git branches and tags.
+  Selecting a ref opens the "Open File at Revision" picker for that ref.<br>
+  <small>
+  Accepts an optional options object argument:
+  - `initialValue = ''` — pre-fill the search input
+  - `branches = true` — include branches in the list
+  - `tags = true` — include tags in the list
+    </small>
+- `quickOpener.showRevisionFilePicker`: Show a picker listing all files at a given git ref.<br>
+  <small>
+  Accepts two optional arguments:
+  - `ref = 'HEAD'` — branch name, tag, or commit SHA to list files from
+  - `options`:
+    - `initialValue?: string` — pre-fill the search input
+      </small>
+
+Commands available while the plugin window is visible:
+
+- `quickOpener.triggerAction`: Trigger a window action.
+- `quickOpener.triggerItemAction`: Trigger an action for the currently selected item.
+- `quickOpener.triggerTabCompletion`: Replace the input value with the selected item path.
+- `quickOpener.popPath`: Go upwards in the path by chopping off the last part of the input (if present), or by navigating to parent directory.
+
 ### Settings
 
 - `quickOpener.fallbackDirectory`: Directory to start in when there's no workspace/file open in the editor. Supports [vscode variables](https://code.visualstudio.com/docs/editor/variables-reference).<br>
@@ -153,32 +179,6 @@ Example of how to define custom key bindings:
   - `mm`
   - `ss`
     </small>
-
-### Commands
-
-- `quickOpener.show`: Show the Quick Opener picker.
-- `quickOpener.showRevisionPicker`: Show the "Open by Revision" picker, listing all git branches and tags.
-  Selecting a ref opens the "Open File at Revision" picker for that ref.<br>
-  <small>
-  Accepts an optional options object argument:
-  - `initialValue = ''` — pre-fill the search input
-  - `branches = true` — include branches in the list
-  - `tags = true` — include tags in the list
-    </small>
-- `quickOpener.showRevisionFilePicker`: Show a picker listing all files at a given git ref.<br>
-  <small>
-  Accepts two optional arguments:
-  - `ref = 'HEAD'` — branch name, tag, or commit SHA to list files from
-  - `options`:
-    - `initialValue?: string` — pre-fill the search input
-      </small>
-
-Commands available while the plugin window is visible:
-
-- `quickOpener.triggerAction`: Trigger a window action.
-- `quickOpener.triggerItemAction`: Trigger an action for the currently selected item.
-- `quickOpener.triggerTabCompletion`: Replace the input value with the selected item path.
-- `quickOpener.popPath`: Go upwards in the path by chopping off the last part of the input (if present), or by navigating to parent directory.
 
 ## Disclaimer
 
