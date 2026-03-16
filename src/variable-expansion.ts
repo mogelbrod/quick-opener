@@ -59,7 +59,7 @@ export function variableExpansionFactory() {
 
   return function variableExpansion(input: string, throwOnUnresolved = true) {
     const unresolved: string[] = []
-    const interpolated = input.replace(/\${(\w+)(:[^\]}]+)?}/g, (_placeholder, key, param) => {
+    const interpolated = input.replace(/\${([\w/]+)(:[^\]}]+)?}/g, (_placeholder, key, param) => {
       if (Object.hasOwn(values, key)) {
         const value = values[key as keyof typeof values]
         return typeof value === 'function' ? value(param || '') : value

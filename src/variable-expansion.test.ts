@@ -44,7 +44,7 @@ describe('variableExpansionFactory()', () => {
 
     it('should handle `${/}`', () => {
       const result = variableExpansion('${/}', false)
-      expect(typeof result).toBe('string')
+      expect(result).toBe(path.sep)
     })
   })
 
