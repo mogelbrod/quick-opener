@@ -1,3 +1,9 @@
+## [0.7.1](https://github.com/mogelbrod/quick-opener/compare/v0.7.0...v0.7.1) (2026-03-16)
+
+### Bug Fixes
+
+* Make new pickers respect 'quickOpener.icons' setting ([e2d423b](https://github.com/mogelbrod/quick-opener/commit/e2d423be55461df60991177dce681a876d5b5ccc))
+
 ## [0.7.0](https://github.com/mogelbrod/quick-opener/compare/v0.6.0...v0.7.0) (2026-03-16)
 
 ### Features
