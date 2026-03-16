@@ -34,6 +34,8 @@ Keybindings on Mac use <kbd>⌘</kbd> in place of <kbd>Ctrl</kbd>.
 Browse and open files as they existed from any git branch, tag, or commit SHA via the
 `quickOpener.showRevisionPicker` command ("Quick Opener: Open by Revision").
 
+This command is not bound to a keyboard shortcut by default, see [Key bindings](#key-bindings) to set one up.
+
 - Lists all local/remote branches and tags, grouped by type
 - Type any commit SHA to use it directly without selecting from the list
 - Selecting a ref opens a file revision picker, enabling opening of any file that existed in that ref
@@ -61,8 +63,9 @@ Browse and open files as they existed from any git branch, tag, or commit SHA vi
 The default behaviour of the plugin is to take over the standard key binding to open a file/folder:
 <kbd>Ctrl</kbd>-<kbd>O</kbd> (Mac: <kbd>⌘</kbd>-<kbd>O</kbd>).
 
-If you wish to use another key binding you can append the following to
-[keybindings.json](https://code.visualstudio.com/docs/getstarted/keybindings#_advanced-customization):
+You can configure key bindings from within vscode via "Open Keyboard Shortcuts", or by editing
+[keybindings.json](https://code.visualstudio.com/docs/getstarted/keybindings#_advanced-customization)
+directly. If you wish to use another key binding you can append the following to it:
 
 ```jsonc
   {
@@ -80,6 +83,10 @@ If you wish to use another key binding you can append the following to
 Example of how to define custom key bindings:
 
 ```jsonc
+  {
+    "key": "ctrl+g o",
+    "command": "quickOpener.showRevisionPicker",
+  },
   {
     "when": "inQuickOpener", // when any quick picker is visible
     "command": "quickOpener.triggerItemAction",
