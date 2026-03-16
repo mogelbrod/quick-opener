@@ -157,12 +157,9 @@ export const pad2 = (n: number | string) => String(n).padStart(2, '0')
 /**
  * Format a date using simple token substitution.
  * Supported tokens: YYYY, YY, MMM, MM, DD, D, HH, H, mm, ss.
- * VS Code exposes no date formatting utilities. For richer format strings consider:
- * - date-fns `format()` — tree-shakeable, ~4 KB for the format function alone
- * - dayjs with the format plugin — ~2 KB gzipped, moment-compatible tokens
  */
 export function formatDate(date: Date, fmt: string): string {
-  return fmt.replace(/YYYY|YY|MMM|MM|DD|HH|mm|ss|D|H/g, token => {
+  return fmt.replace(/\b(YYYY|YY|MMM|MM|DD|HH|mm|ss|D|H)\b/g, token => {
     switch (token) {
       case 'YYYY':
         return String(date.getFullYear())

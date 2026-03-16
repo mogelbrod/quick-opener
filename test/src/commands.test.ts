@@ -16,4 +16,54 @@ describe('commands', () => {
       execStub.restore()
     }
   })
+
+  it('quickOpener.showRevisionPicker command should execute without error', async () => {
+    const execStub = sinon.spy(vscode.commands, 'executeCommand')
+    try {
+      await vscode.commands.executeCommand('quickOpener.showRevisionPicker')
+      await new Promise(resolve => setTimeout(resolve, 10))
+      assert.ok(execStub.calledWith('setContext', 'inQuickOpener', 'revision'))
+    } finally {
+      execStub.restore()
+    }
+  })
+
+  it('quickOpener.showRevisionPicker should accept options argument', async () => {
+    const execStub = sinon.spy(vscode.commands, 'executeCommand')
+    try {
+      await vscode.commands.executeCommand('quickOpener.showRevisionPicker', {
+        initialValue: 'main',
+        branches: true,
+        tags: false,
+      })
+      await new Promise(resolve => setTimeout(resolve, 10))
+      assert.ok(execStub.calledWith('setContext', 'inQuickOpener', 'revision'))
+    } finally {
+      execStub.restore()
+    }
+  })
+
+  it('quickOpener.showRevisionFilePicker command should execute without error', async () => {
+    const execStub = sinon.spy(vscode.commands, 'executeCommand')
+    try {
+      await vscode.commands.executeCommand('quickOpener.showRevisionFilePicker', 'HEAD')
+      await new Promise(resolve => setTimeout(resolve, 10))
+      assert.ok(execStub.calledWith('setContext', 'inQuickOpener', 'revision-file'))
+    } finally {
+      execStub.restore()
+    }
+  })
+
+  it('quickOpener.showRevisionFilePicker should accept options', async () => {
+    const execStub = sinon.spy(vscode.commands, 'executeCommand')
+    try {
+      await vscode.commands.executeCommand('quickOpener.showRevisionFilePicker', 'HEAD', {
+        initialValue: 'src/',
+      })
+      await new Promise(resolve => setTimeout(resolve, 10))
+      assert.ok(execStub.calledWith('setContext', 'inQuickOpener', 'revision-file'))
+    } finally {
+      execStub.restore()
+    }
+  })
 })

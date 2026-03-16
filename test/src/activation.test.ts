@@ -23,5 +23,7 @@ describe('activation', () => {
     assert.ok(commands.includes('quickOpener.triggerAction'))
     assert.ok(commands.includes('quickOpener.triggerItemAction'))
     assert.ok(commands.includes('quickOpener.triggerTabCompletion'))
+    assert.ok(commands.includes('quickOpener.showRevisionPicker'))
+    assert.ok(commands.includes('quickOpener.showRevisionFilePicker'))
   })
 })
