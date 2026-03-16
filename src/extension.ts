@@ -74,13 +74,15 @@ export function activate(ctx: vscode.ExtensionContext) {
 
   ctx.subscriptions.push(
     vscode.commands.registerCommand('quickOpener.showRevisionPicker', options => {
+      const icons = vscode.workspace.getConfiguration('quickOpener').get<boolean>('icons')
       instance = new RevisionOpener({
-        ...options,
-        onDispose,
+        icons,
         onAccept: ref => {
-          instance = new RevisionFileOpener(ref, { onDispose })
+          instance = new RevisionFileOpener(ref, { icons, onDispose })
           instance.show()
         },
+        ...options,
+        onDispose,
       })
       instance.show()
       setOpenerContext('revision')
@@ -89,7 +91,8 @@ export function activate(ctx: vscode.ExtensionContext) {
 
   ctx.subscriptions.push(
     vscode.commands.registerCommand('quickOpener.showRevisionFilePicker', (inputRef, options) => {
-      instance = new RevisionFileOpener(inputRef, { ...options, onDispose })
+      const icons = vscode.workspace.getConfiguration('quickOpener').get<boolean>('icons')
+      instance = new RevisionFileOpener(inputRef, { icons, ...options, onDispose })
       instance.show()
       setOpenerContext('revision-file')
     }),

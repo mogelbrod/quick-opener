@@ -39,16 +39,19 @@ export class RevisionFileOpener implements Opener {
   readonly qp: vscode.QuickPick<FilePickItem>
 
   private ref: Ref & { name: string; commit: string }
+  private icons: boolean
   private onDispose?: () => void
 
   constructor(
     inputRef: string | Ref,
     options: {
       initialValue?: string
+      icons?: boolean
       onDispose?: () => void
     } = {},
   ) {
     this.ref = toRef(inputRef)
+    this.icons = options.icons ?? true
     this.onDispose = options.onDispose
 
     this.qp = vscode.window.createQuickPick<FilePickItem>()
@@ -95,7 +98,7 @@ export class RevisionFileOpener implements Opener {
         label: f,
         description: '',
         path: f,
-        iconPath: vscode.ThemeIcon.File,
+        iconPath: this.icons ? vscode.ThemeIcon.File : undefined,
         resourceUri: vscode.Uri.file(vscode.Uri.joinPath(repo.rootUri, f).fsPath),
         buttons: BUTTON_COMBOS.file,
       }))
@@ -104,7 +107,7 @@ export class RevisionFileOpener implements Opener {
         {
           label: 'Error listing files',
           detail: err.message,
-          iconPath: new vscode.ThemeIcon('alert'),
+          iconPath: this.icons ? new vscode.ThemeIcon('alert') : undefined,
           isError: true,
         },
       ]

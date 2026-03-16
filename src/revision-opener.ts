@@ -66,6 +66,7 @@ export class RevisionOpener implements Opener {
   private showMessage: boolean
   private descriptionStyle: 'sha' | 'custom'
   private descriptionFormat: string
+  private icons: boolean
   private includeBranches: boolean
   private includeTags: boolean
   private onDispose?: () => void
@@ -73,13 +74,13 @@ export class RevisionOpener implements Opener {
 
   private readonly fallbackItem: vscode.QuickPickItem = {
     label: 'Use current:',
-    iconPath: new vscode.ThemeIcon('arrow-right'),
     alwaysShow: false,
   }
 
   constructor(
     options: {
       initialValue?: string
+      icons?: boolean
       branches?: boolean
       tags?: boolean
       onDispose?: () => void
@@ -93,6 +94,7 @@ export class RevisionOpener implements Opener {
     this.descriptionFormat = vscode.workspace
       .getConfiguration('quickOpener')
       .get<string>('refDescriptionFormat', '{commitDate} - {authorName}')
+    this.icons = options.icons ?? true
     this.includeBranches = options.branches !== false
     this.includeTags = options.tags !== false
     this.onDispose = options.onDispose
@@ -168,6 +170,7 @@ export class RevisionOpener implements Opener {
     Object.assign(this.fallbackItem, {
       description: value,
       alwaysShow: !!value,
+      iconPath: this.icons ? new vscode.ThemeIcon('arrow-right') : undefined,
       buttons: [ACTIONS.openChanges, ACTIONS.openDiff],
       ref: toRef(value),
     } satisfies Partial<RefQuickPickItem>)
@@ -177,7 +180,7 @@ export class RevisionOpener implements Opener {
   private buildRefItem(ref: Ref): RefQuickPickItem {
     const icon = REF_TYPE_TO_ICON[ref.type as keyof typeof REF_TYPE_TO_ICON] || 'git-commit'
     return {
-      label: `$(${icon}) ${ref.name}`,
+      label: this.icons ? `$(${icon}) ${ref.name}` : ref.name!,
       description:
         this.descriptionStyle === 'custom'
           ? formatRefDescription(ref, this.descriptionFormat)
@@ -285,7 +288,7 @@ export class RevisionOpener implements Opener {
         {
           label: 'Error loading refs',
           detail: err.message,
-          iconPath: new vscode.ThemeIcon('alert'),
+          iconPath: this.icons ? new vscode.ThemeIcon('alert') : undefined,
           isError: true,
         },
       ]
