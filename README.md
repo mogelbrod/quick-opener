@@ -2,15 +2,17 @@
 
 <!--<img width="40" src="https://raw.githubusercontent.com/mogelbrod/quick-opener/main/icon.png" alt="" align="left">-->
 
-A plugin that makes it easy to open files outside the VS Code workspace
-(or relative to the current file) using a
-[quick pick window](https://code.visualstudio.com/api/ux-guidelines/quick-picks).
+A plugin that makes it easy to open files anywhere:
+
+- …outside the VS Code workspace
+- …relative to the currently open file
+- …in a given git branch/tag/commit
 
 <img width="600" src="https://user-images.githubusercontent.com/150084/196005417-91f2bc86-2b7c-48fb-99ae-fef88514fd29.gif" alt="Animated example"><br>
 
 ## Features
 
-Keybindings on Mac use <kbd>⌘</kbd> in place of <kbd>Ctrl</kbd>.
+_Key bindings on Mac use <kbd>⌘</kbd> in place of <kbd>Ctrl</kbd>._
 
 ### Open/create any local file
 
@@ -40,11 +42,11 @@ This command is not bound to a keyboard shortcut by default, see [Key bindings](
 - Type any commit SHA to use it directly without selecting from the list
 - Selecting a ref opens a file revision picker, enabling opening of any file that existed in that ref
 - Additional functionality available via item buttons for each ref:
-  - _Open changes_ — open a multi-diff view of all changes in the given ref (default hotkey: <kbd>Ctrl</kbd>-<kbd>O</kbd>)
-  - _Diff against HEAD_ — open a multi-diff view comparing that ref to `HEAD` (default hotkey: <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>O</kbd>)
+  - _Open changes_ — open a multi-diff view of all changes in the given ref (<kbd>Ctrl</kbd>-<kbd>O</kbd>)
+  - _Diff against HEAD_ — open a multi-diff view comparing that ref to `HEAD` (<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>O</kbd>)
 - Toggle visibility of additional metadata via the title bar buttons
-  - _Toggle description format_ — select between showing short SHA or custom metadata (default hotkey: <kbd>Ctrl</kbd>-<kbd>D</kbd>)
-  - _Toggle commit message visibility_ — show/hide most recent commit title (default hotkey: <kbd>Ctrl</kbd>-<kbd>M</kbd>)
+  - _Toggle description format_ — select between showing short SHA or custom metadata (<kbd>Ctrl</kbd>-<kbd>D</kbd>)
+  - _Toggle commit message visibility_ — show/hide most recent commit title (<kbd>Ctrl</kbd>-<kbd>M</kbd>)
 - Customize metadata format via `quickOpener.refDescriptionFormat` setting
 
 ## Installation
