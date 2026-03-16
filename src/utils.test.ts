@@ -8,7 +8,7 @@ vi.mock('vscode', () => ({
 }))
 
 import type { Ref } from './git'
-import { formatDate, formatRef, formatRefDescription, MONTHS, pad2, RefType, toRef } from './utils'
+import { formatDate, formatRef, formatRefDescription, pad2, RefType, toRef } from './utils'
 
 describe('toRef()', () => {
   it('should convert a string SHA into a Ref', () => {
