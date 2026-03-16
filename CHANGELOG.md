@@ -1,3 +1,13 @@
+## [0.7.0](https://github.com/mogelbrod/quick-opener/compare/v0.6.0...v0.7.0) (2026-03-16)
+
+### Features
+
+* Add showRevisionPicker & showRevisionFilePicker commands that pick git refs & opens files/changes within it ([30febe4](https://github.com/mogelbrod/quick-opener/commit/30febe413398847cd2a384db1d24890d0014a55c))
+
+### Bug Fixes
+
+* Fix broken ${/} variable expansion ([ab6ac89](https://github.com/mogelbrod/quick-opener/commit/ab6ac891939b674f761e60879baf8735935a22b9))
+
 ## [0.6.0](https://github.com/mogelbrod/quick-opener/compare/v0.5.2...v0.6.0) (2026-01-22)
 
 ### Features
