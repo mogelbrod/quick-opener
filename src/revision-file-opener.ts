@@ -8,6 +8,7 @@ import {
   getRepository,
   listFilesAtRef,
   openDiffBetween,
+  openFileRevision,
   toRef,
 } from './utils'
 
@@ -43,14 +44,14 @@ export class RevisionFileOpener implements Opener {
   private onDispose?: () => void
 
   constructor(
-    inputRef: string | Ref,
     options: {
+      ref?: string | Ref
       initialValue?: string
       icons?: boolean
       onDispose?: () => void
     } = {},
   ) {
-    this.ref = toRef(inputRef)
+    this.ref = toRef(options.ref || 'HEAD')
     this.icons = options.icons ?? true
     this.onDispose = options.onDispose
 
@@ -162,16 +163,8 @@ export class RevisionFileOpener implements Opener {
     item: FilePickItem | undefined,
     viewColumn = vscode.ViewColumn.Active,
   ): Promise<void> {
-    if (!item || item.isError || !item.path) return
-    const api = await getGitAPI()
-    const repo = getRepository(api)
-    const uri = api.toGitUri(
-      vscode.Uri.joinPath(repo.rootUri, item.path!),
-      this.ref.name || this.ref.commit,
-    )
-    vscode.workspace.openTextDocument(uri).then(
-      doc => vscode.window.showTextDocument(doc, { viewColumn }),
-      err => vscode.window.showErrorMessage(err.message),
-    )
+    return openFileRevision(item?.path, this.ref, viewColumn).catch(err => {
+      vscode.window.showErrorMessage(err.message)
+    })
   }
 }

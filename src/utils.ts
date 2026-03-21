@@ -57,6 +57,20 @@ export function getRepository(api: API): Repository {
 
 const execFile = promisify(execFileCb)
 
+/** Open specified file at a given git revision */
+export async function openFileRevision(
+  path: string | undefined,
+  ref: Ref,
+  viewColumn: vscode.ViewColumn = vscode.ViewColumn.Active,
+): Promise<void> {
+  if (!path) return
+  const api = await getGitAPI()
+  const repo = getRepository(api)
+  const uri = api.toGitUri(vscode.Uri.joinPath(repo.rootUri, path), ref.name || ref.commit!)
+  const doc = await vscode.workspace.openTextDocument(uri)
+  await vscode.window.showTextDocument(doc, { viewColumn })
+}
+
 /** List all files at a given git ref using `git ls-tree`. */
 export async function listFilesAtRef(
   gitPath: string,

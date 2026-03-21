@@ -58,6 +58,7 @@ export function variableExpansionFactory() {
   } as const satisfies Record<string, string | ((param: string, ...args: any[]) => string)>
 
   return function variableExpansion(input: string, throwOnUnresolved = true) {
+    if (!input) return input
     const unresolved: string[] = []
     const interpolated = input.replace(/\${([\w/]+)(:[^\]}]+)?}/g, (_placeholder, key, param) => {
       if (Object.hasOwn(values, key)) {

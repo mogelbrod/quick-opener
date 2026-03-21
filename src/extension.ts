@@ -1,12 +1,13 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
+import type { Ref } from './git'
 import { type Opener, setOpenerContext } from './opener'
 import { PathScanner } from './path-scanner'
 import { sepRegex } from './path-utils'
 import { QuickOpener } from './quick-opener'
 import { RevisionFileOpener } from './revision-file-opener'
 import { RevisionOpener } from './revision-opener'
-import { setGlobalState } from './utils'
+import { openFileRevision, setGlobalState } from './utils'
 import { variableExpansionFactory } from './variable-expansion'
 
 /** Currently visible instance of plugin */
@@ -73,29 +74,66 @@ export function activate(ctx: vscode.ExtensionContext) {
   )
 
   ctx.subscriptions.push(
-    vscode.commands.registerCommand('quickOpener.showRevisionPicker', options => {
-      const icons = vscode.workspace.getConfiguration('quickOpener').get<boolean>('icons')
-      instance = new RevisionOpener({
-        icons,
-        onAccept: ref => {
-          instance = new RevisionFileOpener(ref, { icons, onDispose })
-          instance.show()
-        },
-        ...options,
-        onDispose,
-      })
-      instance.show()
-      setOpenerContext('revision')
-    }),
+    vscode.commands.registerCommand(
+      'quickOpener.showRevisionPicker',
+      ({
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: Intentional
+        file = '${relativeFile}',
+        skipFileSelection = false,
+        ...options
+      }: ConstructorParameters<typeof RevisionOpener>[0] & {
+        file?: string
+        skipFileSelection?: boolean
+      } = {}) => {
+        const icons = vscode.workspace.getConfiguration('quickOpener').get<boolean>('icons')
+        const expandVariables = variableExpansionFactory()
+        const filePath = expandVariables(file)
+        instance = new RevisionOpener({
+          icons,
+          onAccept: async ref => {
+            if (skipFileSelection && filePath) {
+              try {
+                await openFileRevision(filePath, ref)
+                return
+              } catch {
+                console.warn('Failed to open file from revision, falling back to file picker')
+              }
+            }
+            instance = new RevisionFileOpener({
+              ref,
+              icons,
+              initialValue: filePath,
+              onDispose,
+            })
+            instance.show()
+          },
+          ...options,
+          initialValue: expandVariables(options.initialValue || ''),
+          onDispose,
+        })
+        instance.show()
+        setOpenerContext('revision')
+      },
+    ),
   )
 
   ctx.subscriptions.push(
-    vscode.commands.registerCommand('quickOpener.showRevisionFilePicker', (inputRef, options) => {
-      const icons = vscode.workspace.getConfiguration('quickOpener').get<boolean>('icons')
-      instance = new RevisionFileOpener(inputRef, { icons, ...options, onDispose })
-      instance.show()
-      setOpenerContext('revision-file')
-    }),
+    vscode.commands.registerCommand(
+      'quickOpener.showRevisionFilePicker',
+      (options: ConstructorParameters<typeof RevisionFileOpener>[0] = {}) => {
+        const icons = vscode.workspace.getConfiguration('quickOpener').get<boolean>('icons')
+        const expandVariables = variableExpansionFactory()
+        instance = new RevisionFileOpener({
+          icons,
+          ...options,
+          ref: typeof options.ref === 'string' ? expandVariables(options.ref) : options.ref,
+          initialValue: expandVariables(options?.initialValue || ''),
+          onDispose,
+        })
+        instance.show()
+        setOpenerContext('revision-file')
+      },
+    ),
   )
 
   ctx.subscriptions.push(

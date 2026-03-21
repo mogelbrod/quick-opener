@@ -36,7 +36,7 @@ _Key bindings on Mac use <kbd>⌘</kbd> in place of <kbd>Ctrl</kbd>._
 Browse and open files as they existed from any git branch, tag, or commit SHA via the
 `quickOpener.showRevisionPicker` command ("Quick Opener: Open by Revision").
 
-This command is not bound to a keyboard shortcut by default, see [Key bindings](#key-bindings) to set one up.
+This command is not bound to a keyboard shortcut by default, see [Custom key bindings](#custom-key-bindings) to set one up.
 
 - Lists all local/remote branches and tags, grouped by type
 - Type any commit SHA to use it directly without selecting from the list
@@ -85,20 +85,27 @@ directly. If you wish to use another key binding you can append the following to
 Example of how to define custom key bindings:
 
 ```jsonc
-  {
-    "key": "ctrl+g o",
+  { // Pick git revision, then file from revision to open
+    "key": "ctrl+g /",
     "command": "quickOpener.showRevisionPicker",
   },
-  {
+  { // Open current file after selecting a git revision
+    "key": "ctrl+g o",
+    "command": "quickOpener.showRevisionPicker",
+    "args": { "skipFileSelection": true },
+  },
+
+  { // Trigger first visible action for quick picker item (action depends on item type)
     "when": "inQuickOpener", // when any quick picker is visible
     "command": "quickOpener.triggerItemAction",
-    "args": 1, // trigger first visible action for item (depends on item type)
+    "args": 1,
     "key": "ctrl+t",
   },
-  {
-    "when": "inQuickOpener == 'revision'", // when revision picker is visible
+
+  { // Toggle commit message visibility in revision picker (already configured by default)
+    "when": "inQuickOpener == 'revision'",
     "command": "quickOpener.triggerAction",
-    "args": "toggleMessage", // toggle commit message visibility
+    "args": "toggleMessage",
     "key": "ctrl+m",
   }
 ```
@@ -109,18 +116,19 @@ Example of how to define custom key bindings:
 - `quickOpener.showRevisionPicker`: Show the "Open by Revision" picker, listing all git branches and tags.
   Selecting a ref opens the "Open File at Revision" picker for that ref.<br>
   <small>
-  Accepts an optional options object argument:
-  - `initialValue = ''` — pre-fill the search input
+  Accepts an optional object argument:
   - `branches = true` — include branches in the list
   - `tags = true` — include tags in the list
+  - `file = '${relativeFile}` — pre-fill the file input
+  - `skipFileSelection = false` — Open `file` immediately (if it exists) after selecting revision
+  - `initialValue = ''` — pre-fill the revision input
     </small>
 - `quickOpener.showRevisionFilePicker`: Show a picker listing all files at a given git ref.<br>
   <small>
-  Accepts two optional arguments:
+  Accepts an optional object argument:
   - `ref = 'HEAD'` — branch name, tag, or commit SHA to list files from
-  - `options`:
-    - `initialValue?: string` — pre-fill the search input
-      </small>
+  - `initialValue?: string` — pre-fill the search input
+    </small>
 
 Commands available while the plugin window is visible:
 
