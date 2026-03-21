@@ -1,3 +1,9 @@
+## [0.8.0](https://github.com/mogelbrod/quick-opener/compare/v0.7.1...v0.8.0) (2026-03-21)
+
+### Features
+
+* Pre-fill current file path in revision file picker + add `skipFileSelection` option ([23a587b](https://github.com/mogelbrod/quick-opener/commit/23a587b4fe7f3cfd94260bc967182fc71e63ce6a))
+
 ## [0.7.1](https://github.com/mogelbrod/quick-opener/compare/v0.7.0...v0.7.1) (2026-03-16)
 
 ### Bug Fixes
