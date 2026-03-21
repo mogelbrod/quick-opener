@@ -1,6 +1,5 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
-import type { Ref } from './git'
 import { type Opener, setOpenerContext } from './opener'
 import { PathScanner } from './path-scanner'
 import { sepRegex } from './path-utils'
