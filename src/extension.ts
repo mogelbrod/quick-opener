@@ -1,5 +1,6 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
+import { ChangedFilesOpener } from './changed-files-opener'
 import { type Opener, setOpenerContext } from './opener'
 import { PathScanner } from './path-scanner'
 import { sepRegex } from './path-utils'
@@ -162,6 +163,18 @@ export function activate(ctx: vscode.ExtensionContext) {
   ctx.subscriptions.push(
     vscode.commands.registerCommand('quickOpener.triggerTabCompletion', () => {
       if (instance instanceof QuickOpener) instance.triggerTabCompletion()
+    }),
+  )
+
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand('quickOpener.showChangedFiles', () => {
+      const icons = vscode.workspace.getConfiguration('quickOpener').get<boolean>('icons')
+      instance = new ChangedFilesOpener({
+        icons,
+        onDispose,
+      })
+      instance.show()
+      setOpenerContext('changed-files')
     }),
   )
 }

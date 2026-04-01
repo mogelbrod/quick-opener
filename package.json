@@ -125,6 +125,10 @@
       {
         "command": "quickOpener.showRevisionPicker",
         "title": "Quick Opener: Open by Revision"
+      },
+      {
+        "command": "quickOpener.showChangedFiles",
+        "title": "Quick Opener: Open Changed File"
       }
     ],
     "keybindings": [
