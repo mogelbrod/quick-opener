@@ -10,7 +10,7 @@ export interface Opener {
 }
 
 /** Value set on the `inQuickOpener` context key. `false` means no opener is visible. */
-export type OpenerContext = 'quick' | 'revision' | 'revision-file' | false
+export type OpenerContext = 'quick' | 'revision' | 'revision-file' | 'changed-files' | false
 
 /** Set the `inQuickOpener` context value. Pass `false` to clear it. */
 export function setOpenerContext(value: OpenerContext): void {

@@ -71,6 +71,42 @@ export async function openFileRevision(
   await vscode.window.showTextDocument(doc, { viewColumn })
 }
 
+/** List all files changed since the last commit using `git status --porcelain`. */
+export async function listChangedFiles(
+  gitPath: string,
+  repoRoot: string,
+): Promise<Array<{ path: string; statusCode: string }>> {
+  const { stdout } = await execFile(
+    gitPath,
+    ['status', '--porcelain=v1', '-z', '--untracked-files=all'],
+    { cwd: repoRoot },
+  ).catch((error: Error & { stdout?: string; stderr?: string }) => {
+    const msg = error.stderr?.trim()
+    throw msg ? new Error(msg) : error
+  })
+
+  const results: Array<{ path: string; statusCode: string }> = []
+  const parts = stdout.split('\0')
+  let i = 0
+  while (i < parts.length) {
+    const entry = parts[i++]
+    if (!entry || entry.length < 3) continue
+    const x = entry[0] // index (staged) status
+    const y = entry[1] // worktree (unstaged) status
+    const filePath = entry.slice(3)
+    // For renames/copies the original path follows as the next NUL-delimited entry
+    if (x === 'R' || x === 'C' || y === 'R' || y === 'C') {
+      i++ // skip original path
+    }
+    // Prefer staged status over unstaged; skip ignored files
+    const statusCode = x !== ' ' && x !== '?' ? x : y
+    if (statusCode !== '!') {
+      results.push({ path: filePath, statusCode })
+    }
+  }
+  return results
+}
+
 /** List all files at a given git ref using `git ls-tree`. */
 export async function listFilesAtRef(
   gitPath: string,
