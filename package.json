@@ -28,7 +28,7 @@
   "publisher": "mogelbrod",
   "author": "Victor Hallberg <victor@hallberg.cc>",
   "license": "MIT",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "engines": {
     "vscode": "^1.108.0",
     "node": ">=18.0.0"
@@ -129,6 +129,11 @@
       {
         "command": "quickOpener.showChangedFiles",
         "title": "Quick Opener: Open Changed File"
+      },
+      {
+        "command": "quickOpener.refreshChangedFiles",
+        "title": "Refresh",
+        "icon": "$(refresh)"
       }
     ],
     "keybindings": [
@@ -182,14 +187,36 @@
         "args": "toggleMessage",
         "key": "ctrl+m",
         "mac": "cmd+m"
+      },
+      {
+        "command": "quickOpener.showChangedFiles",
+        "key": "ctrl+alt+p"
       }
-    ]
+    ],
+    "views": {
+      "scm": [
+        {
+          "id": "quickOpener.changedFilesView",
+          "name": "New or Changed since Last Commit",
+          "icon": "icon.png"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "quickOpener.refreshChangedFiles",
+          "when": "view == quickOpener.changedFilesView",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
-    "clean": "rimraf dist test/dist quickopener-*.vsix .vscode-test",
-    "build": "./esbuild.mjs",
-    "build:watch": "./esbuild.mjs --watch",
-    "package": "npm run clean && ./esbuild.mjs --minify",
+    "clean": "rimraf dist test/dist --glob quickopener-*.vsix .vscode-test",
+    "build": "node esbuild.mjs",
+    "build:watch": "node esbuild.mjs --watch",
+    "package": "npm run clean && node esbuild.mjs --minify",
     "vscode:prepublish": "npm run package",
     "check": "concurrently --raw 'tsc' 'tsc -p ./test' 'biome check'",
     "fix": "biome check --write",
