@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { type FilePickItem, getButtonAction, type Opener } from './opener'
 import { ACTIONS as QUICK_OPENER_ACTIONS } from './quick-opener'
-import { getGitAPI, getRepository, listChangedFiles } from './utils'
+import { getChangedFiles, getGitAPI, getRecentFiles, getWorkspaceRepository, log } from './utils'
 
 /** Human-readable labels for git porcelain status codes. */
 const STATUS_DESCRIPTIONS: Record<string, string> = {
@@ -78,8 +78,9 @@ export class ChangedFilesOpener implements Opener {
   async updateItems(): Promise<void> {
     try {
       const api = await getGitAPI()
-      const repo = getRepository(api)
-      const files = await listChangedFiles(api.git.path, repo.rootUri.fsPath)
+      const repo = getWorkspaceRepository(api)
+      log(`ChangedFilesOpener.updateItems: repo=${repo.rootUri.fsPath}`)
+      const files = getChangedFiles(repo)
 
       if (files.length === 0) {
         this.qp.items = [
@@ -91,20 +92,27 @@ export class ChangedFilesOpener implements Opener {
           },
         ]
       } else {
-        this.qp.items = files.map(f => {
-          const absPath = vscode.Uri.joinPath(repo.rootUri, f.path).fsPath
-          const isUntracked = f.statusCode === '?'
-          return {
-            label: f.path,
-            description: STATUS_DESCRIPTIONS[f.statusCode] ?? f.statusCode,
-            path: absPath,
-            iconPath: this.icons ? vscode.ThemeIcon.File : undefined,
-            resourceUri: vscode.Uri.file(absPath),
-            buttons: isUntracked
-              ? [ACTIONS.openSplit]
-              : [ACTIONS.openDiff, ACTIONS.openSplit],
-          }
-        })
+        const recentRank = new Map(getRecentFiles().map((p, i) => [p, i]))
+        this.qp.items = [...files]
+          .sort((a, b) => {
+            const aAbs = vscode.Uri.joinPath(repo.rootUri, a.path).fsPath
+            const bAbs = vscode.Uri.joinPath(repo.rootUri, b.path).fsPath
+            return (recentRank.get(aAbs) ?? Infinity) - (recentRank.get(bAbs) ?? Infinity)
+          })
+          .map(f => {
+            const absPath = vscode.Uri.joinPath(repo.rootUri, f.path).fsPath
+            const isUntracked = f.statusCode === '?'
+            return {
+              label: f.path,
+              description: STATUS_DESCRIPTIONS[f.statusCode] ?? f.statusCode,
+              path: absPath,
+              iconPath: this.icons ? vscode.ThemeIcon.File : undefined,
+              resourceUri: vscode.Uri.file(absPath),
+              buttons: isUntracked
+                ? [ACTIONS.openSplit]
+                : [ACTIONS.openDiff, ACTIONS.openSplit],
+            }
+          })
       }
     } catch (err: any) {
       this.qp.items = [
