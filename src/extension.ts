@@ -1,13 +1,14 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
 import { ChangedFilesOpener } from './changed-files-opener'
+import { ChangedFilesViewProvider } from './changed-files-view'
 import { type Opener, setOpenerContext } from './opener'
 import { PathScanner } from './path-scanner'
 import { sepRegex } from './path-utils'
 import { QuickOpener } from './quick-opener'
 import { RevisionFileOpener } from './revision-file-opener'
 import { RevisionOpener } from './revision-opener'
-import { openFileRevision, setGlobalState } from './utils'
+import { openFileRevision, setGlobalState, setOutputChannel, trackRecentFile } from './utils'
 import { variableExpansionFactory } from './variable-expansion'
 
 /** Currently visible instance of plugin */
@@ -18,6 +19,37 @@ export function activate(ctx: vscode.ExtensionContext) {
   // Initialize vscode context value
   setOpenerContext(false)
   setGlobalState(ctx)
+
+  const outputChannel = vscode.window.createOutputChannel('Quick Opener')
+  ctx.subscriptions.push(outputChannel)
+  setOutputChannel(outputChannel)
+
+  // Track recently opened files to surface them first in the changed-files picker
+  ctx.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument(doc => {
+      if (doc.uri.scheme === 'file') trackRecentFile(doc.uri.fsPath)
+    }),
+  )
+
+  // Register "New or Changed since Last Commit" tree view in the Source Control sidebar
+  const changedFilesViewProvider = new ChangedFilesViewProvider()
+  ctx.subscriptions.push(changedFilesViewProvider)
+  ctx.subscriptions.push(
+    vscode.window.registerTreeDataProvider(
+      'quickOpener.changedFilesView',
+      changedFilesViewProvider,
+    ),
+  )
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand('quickOpener.refreshChangedFiles', () => {
+      changedFilesViewProvider.refresh()
+    }),
+  )
+  ctx.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      changedFilesViewProvider.refresh()
+    }),
+  )
 
   const onDispose = () => {
     setOpenerContext(false)
