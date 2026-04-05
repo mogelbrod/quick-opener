@@ -1,3 +1,9 @@
+## [0.9.0](https://github.com/mogelbrod/quick-opener/compare/v0.8.0...v0.9.0) (2026-04-05)
+
+### Features
+
+* Make `quickOpener.showRevisionFilePicker` command list changed files in working tree ([cb47c43](https://github.com/mogelbrod/quick-opener/commit/cb47c438eb3c5030e002bc8fde70bd5a5f61be92))
+
 ## [0.8.0](https://github.com/mogelbrod/quick-opener/compare/v0.7.1...v0.8.0) (2026-03-21)
 
 ### Features
