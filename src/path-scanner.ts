@@ -25,10 +25,17 @@ export interface ScanEntry {
   worker?: ScanWorker
 }
 
+/** Promise returned by an active {@link PathScanner.scan} call. */
 export type ScanWorker = Promise<ScanEntry>
 
+/** Directory and file names excluded from scan results by default. */
 export const DEFAULT_EXCLUDES: readonly string[] = ['node_modules', '.git', '.DS_Store']
 
+/**
+ * Scans directories recursively, caching results to serve fast path completion.
+ * Use {@link scan} to populate the cache, then {@link forEach} or {@link toArray}
+ * to iterate results.
+ */
 export class PathScanner {
   /** List of directory/file names to exclude from result lists. */
   exclude: Set<string>

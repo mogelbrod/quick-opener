@@ -1,6 +1,12 @@
 import * as vscode from 'vscode'
 import type { Ref } from './git'
-import { getButtonAction, type Opener, type RefQuickPickItem } from './opener'
+import {
+  getButtonAction,
+  type InputButton,
+  type Opener,
+  type RefQuickPickItem,
+  setOpenerContext,
+} from './opener'
 import {
   formatRef,
   formatRefDescription,
@@ -23,25 +29,42 @@ const REF_TYPE_TO_ICON = {
   [RefType.Tag]: 'tag',
 } as const
 
-/** Actions available for quick pick window/items */
+/**
+ * Actions available for quick pick window/items.
+ * Toggled buttons use icons that represent the current (opposite) state.
+ */
 export const ACTIONS = {
-  toggleDescription: {
-    iconPath: new vscode.ThemeIcon('info'),
-    tooltip: 'Toggle description format (SHA / custom)',
+  toggleDescriptionCustom: {
+    id: 'toggleDescription',
+    iconPath: new vscode.ThemeIcon('symbol-number'),
+    tooltip: 'Show custom description format',
   },
-  toggleMessage: {
+  toggleDescriptionSha: {
+    id: 'toggleDescription',
+    iconPath: new vscode.ThemeIcon('symbol-parameter'),
+    tooltip: 'Show commit SHA in description',
+  },
+  toggleMessageOn: {
+    id: 'toggleMessage',
     iconPath: new vscode.ThemeIcon('comment'),
-    tooltip: 'Toggle commit message visibility',
+    tooltip: 'Show commit message',
+  },
+  toggleMessageOff: {
+    id: 'toggleMessage',
+    iconPath: new vscode.ThemeIcon('comment-unresolved'),
+    tooltip: 'Hide commit message',
   },
   openDiff: {
+    id: 'openDiff',
     iconPath: new vscode.ThemeIcon('compare-changes'),
     tooltip: 'Diff against HEAD',
   },
   openChanges: {
+    id: 'openChanges',
     iconPath: new vscode.ThemeIcon('request-changes'),
     tooltip: 'Open changes',
   },
-} as const satisfies Record<string, vscode.QuickInputButton>
+} as const satisfies Record<string, InputButton>
 
 /** String union of all valid {@link ACTIONS} keys for {@link RevisionOpener}. */
 export type ActionId = keyof typeof ACTIONS
@@ -106,10 +129,10 @@ export class RevisionOpener implements Opener {
     this.qp.busy = true
     this.qp.matchOnDescription = true
     this.qp.matchOnDetail = false
-    this.qp.buttons = [ACTIONS.toggleDescription, ACTIONS.toggleMessage]
     this.qp.value = options.initialValue || ''
-
+    this.updateButtons()
     this.updateFallbackItem(options.initialValue ?? '')
+
     this.qp.onDidChangeValue(v => this.updateFallbackItem(v))
     this.qp.onDidHide(() => this.dispose())
     this.qp.onDidAccept(() => this.onAcceptItem())
@@ -117,9 +140,11 @@ export class RevisionOpener implements Opener {
     this.qp.onDidTriggerItemButton(e => this.triggerItemAction(e.button as Action, e.item))
   }
 
+  /** Show the quick picker and begin loading git refs. */
   show(): void {
     this.qp.show()
     this.load()
+    setOpenerContext('revision')
   }
 
   /** Hide/discard the quick picker */
@@ -133,10 +158,12 @@ export class RevisionOpener implements Opener {
     const action = getButtonAction(actionOrOffset, this.qp.buttons, ACTIONS)
 
     switch (action) {
-      case ACTIONS.toggleDescription:
+      case ACTIONS.toggleDescriptionCustom:
+      case ACTIONS.toggleDescriptionSha:
         this.toggleDescriptionStyle()
         return
-      case ACTIONS.toggleMessage:
+      case ACTIONS.toggleMessageOn:
+      case ACTIONS.toggleMessageOff:
         this.toggleMessage()
         return
     }
@@ -177,6 +204,8 @@ export class RevisionOpener implements Opener {
     this.qp.items = value ? [...this.baseItems, this.fallbackItem] : this.baseItems
   }
 
+  private _refItemButtons = [ACTIONS.openChanges, ACTIONS.openDiff]
+
   private buildRefItem(ref: Ref): RefQuickPickItem {
     const icon = REF_TYPE_TO_ICON[ref.type as keyof typeof REF_TYPE_TO_ICON] || 'git-commit'
     return {
@@ -186,7 +215,7 @@ export class RevisionOpener implements Opener {
           ? formatRefDescription(ref, this.descriptionFormat)
           : ref.commit?.slice(0, 8),
       detail: this.showMessage ? ref.commitDetails?.message?.split('\n')[0] : undefined,
-      buttons: [ACTIONS.openChanges, ACTIONS.openDiff],
+      buttons: this._refItemButtons,
       ref,
     }
   }
@@ -211,18 +240,33 @@ export class RevisionOpener implements Opener {
     this.qp.items = this.fallbackItem.alwaysShow ? [...result, this.fallbackItem] : result
   }
 
-  toggleDescriptionStyle(): void {
+  /** Toggle (or explicitly set) the ref description format between SHA and custom. */
+  toggleDescriptionStyle(
+    value: 'sha' | 'custom' = this.descriptionStyle === 'sha' ? 'custom' : 'sha',
+  ): void {
     if (!this.loadedRefs) return
-    this.descriptionStyle = this.descriptionStyle === 'sha' ? 'custom' : 'sha'
-    getGlobalState()?.update(REF_DESCRIPTION_STYLE_KEY, this.descriptionStyle)
+    this.descriptionStyle = value
+    getGlobalState()?.update(REF_DESCRIPTION_STYLE_KEY, value)
+    this.updateButtons()
     this.updateItems()
   }
 
-  toggleMessage(): void {
+  /** Toggle (or explicitly set) whether commit messages are shown per item. */
+  toggleMessage(value = !this.showMessage): void {
     if (!this.loadedRefs) return
-    this.showMessage = !this.showMessage
-    getGlobalState()?.update(REF_DETAILS_KEY, this.showMessage)
+    this.showMessage = value
+    getGlobalState()?.update(REF_DETAILS_KEY, value)
+    this.updateButtons()
     this.updateItems()
+  }
+
+  private updateButtons(): void {
+    this.qp.buttons = [
+      ACTIONS[
+        this.descriptionStyle === 'custom' ? 'toggleDescriptionSha' : 'toggleDescriptionCustom'
+      ],
+      ACTIONS[this.showMessage ? 'toggleMessageOff' : 'toggleMessageOn'],
+    ]
   }
 
   private onAcceptItem(): void {

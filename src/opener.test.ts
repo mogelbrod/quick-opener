@@ -8,13 +8,13 @@ vi.mock('vscode', () => ({
 }))
 
 import * as vscode from 'vscode'
-import { getButtonAction } from './opener'
+import { getButtonAction, type InputButton } from './opener'
 
 const ACTIONS = {
-  alpha: { iconPath: new vscode.ThemeIcon('a'), tooltip: 'Alpha' },
-  beta: { iconPath: new vscode.ThemeIcon('b'), tooltip: 'Beta' },
-  gamma: { iconPath: new vscode.ThemeIcon('c'), tooltip: 'Gamma' },
-} as const satisfies Record<string, vscode.QuickInputButton>
+  alpha: { id: 'a', iconPath: new vscode.ThemeIcon('a'), tooltip: 'Alpha' },
+  beta: { id: 'b', iconPath: new vscode.ThemeIcon('b'), tooltip: 'Beta' },
+  gamma: { id: 'c', iconPath: new vscode.ThemeIcon('c'), tooltip: 'Gamma' },
+} as const satisfies Record<string, InputButton>
 
 type Action = (typeof ACTIONS)[keyof typeof ACTIONS]
 

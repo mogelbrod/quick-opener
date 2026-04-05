@@ -19,6 +19,13 @@ export function getGlobalState(): vscode.Memento | undefined {
 /** Mirror of the RefType const enum from the git extension API */
 export const RefType = { Head: 0, RemoteHead: 1, Tag: 2 } as const
 
+/** Virtual reference to working tree */
+export const WORKING_TREE_REF = {
+  commit: 'working tree',
+  name: 'working tree',
+  type: RefType.Head,
+} as const satisfies Ref
+
 /** Retrieve the VS Code git extension API */
 export async function getGitAPI(): Promise<API> {
   const ext = vscode.extensions.getExtension<GitExtension>('vscode.git')
@@ -57,6 +64,18 @@ export function getRepository(api: API): Repository {
 
 const execFile = promisify(execFileCb)
 
+/** Run a git command in the repository root and return stdout as a string. */
+export async function execGit(api: API, args: string[]): Promise<string> {
+  const repo = getRepository(api)
+  const { stdout } = await execFile(api.git.path, args, {
+    cwd: repo.rootUri.fsPath,
+  }).catch((error: Error & { stdout?: string; stderr?: string }) => {
+    const msg = error.stderr?.trim()
+    throw msg ? new Error(msg) : error
+  })
+  return stdout
+}
+
 /** Open specified file at a given git revision */
 export async function openFileRevision(
   path: string | undefined,
@@ -66,24 +85,77 @@ export async function openFileRevision(
   if (!path) return
   const api = await getGitAPI()
   const repo = getRepository(api)
-  const uri = api.toGitUri(vscode.Uri.joinPath(repo.rootUri, path), ref.name || ref.commit!)
+  const fileUri = vscode.Uri.joinPath(repo.rootUri, path)
+  const uri = ref === WORKING_TREE_REF ? fileUri : api.toGitUri(fileUri, ref.name || ref.commit!)
   const doc = await vscode.workspace.openTextDocument(uri)
   await vscode.window.showTextDocument(doc, { viewColumn })
 }
 
 /** List all files at a given git ref using `git ls-tree`. */
-export async function listFilesAtRef(
-  gitPath: string,
-  repoRoot: string,
-  ref: string,
-): Promise<string[]> {
-  const { stdout } = await execFile(gitPath, ['ls-tree', '-r', '--name-only', '-z', ref], {
-    cwd: repoRoot,
-  }).catch((error: Error & { stdout?: string; stderr?: string }) => {
-    const msg = error.stderr?.trim()
-    throw msg ? new Error(msg) : error
-  })
+export async function listFilesAtRef(api: API, ref: string): Promise<string[]> {
+  const stdout = await execGit(api, ['ls-tree', '-r', '--name-only', '-z', ref])
   return stdout.split('\0').filter(Boolean)
+}
+
+/** All git diff-tree status letters used as the default filter value. */
+export const ALL_GIT_STATUSES = 'ACMDRT'
+
+/**
+ * Returns a map of file path → single uppercase status letter for all files
+ * changed in a given commit.
+ * Rename/copy entries are keyed by the new (destination) path.
+ */
+export async function listChangedFilesAtRef(
+  api: API,
+  ref: string,
+  filterByStatus = ALL_GIT_STATUSES,
+): Promise<Map<string, string>> {
+  const stdout = await execGit(api, [
+    'diff-tree',
+    '--no-commit-id',
+    '--name-status',
+    '-r',
+    '-z',
+    ref,
+  ])
+  return parseGitDiffOutput(stdout, filterByStatus)
+}
+
+/**
+ * Returns a map of file path → single uppercase status letter for all files
+ * changed in the current working tree (vs HEAD).
+ * Includes both staged and unstaged changes.
+ * Rename/copy entries are keyed by the new (destination) path.
+ */
+export async function listChangedFilesInWorkingTree(
+  api: API,
+  filterByStatus = ALL_GIT_STATUSES,
+): Promise<Map<string, string>> {
+  const stdout = await execGit(api, ['diff', '--name-status', '-z', 'HEAD'])
+  return parseGitDiffOutput(stdout, filterByStatus)
+}
+
+function parseGitDiffOutput(
+  stdout: string,
+  filterByStatus = ALL_GIT_STATUSES,
+): Map<string, string> {
+  const tokens = stdout.split('\0').filter(Boolean)
+  const result = new Map<string, string>()
+  let i = 0
+  while (i < tokens.length) {
+    const status = tokens[i++]
+    const letter = status[0].toUpperCase()
+    if (letter === 'R' || letter === 'C') {
+      i++ // skip old path
+    }
+    if (!filterByStatus.includes(letter)) {
+      i++ // skip path
+      continue
+    }
+    const path = tokens[i++]
+    if (path) result.set(path, letter)
+  }
+  return result
 }
 
 /** Opens a vscode multi-diff buffer for changes between two refs */

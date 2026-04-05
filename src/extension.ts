@@ -68,7 +68,6 @@ export function activate(ctx: vscode.ExtensionContext) {
       })
 
       instance.show()
-      setOpenerContext('quick')
     }),
   )
 
@@ -79,10 +78,13 @@ export function activate(ctx: vscode.ExtensionContext) {
         // biome-ignore lint/suspicious/noTemplateCurlyInString: Intentional
         file = '${relativeFile}',
         skipFileSelection = false,
+        filterByStatus,
         ...options
       }: ConstructorParameters<typeof RevisionOpener>[0] & {
         file?: string
         skipFileSelection?: boolean
+        /** Forwarded to {@link RevisionFileOpener} */
+        filterByStatus?: string
       } = {}) => {
         const icons = vscode.workspace.getConfiguration('quickOpener').get<boolean>('icons')
         const expandVariables = variableExpansionFactory()
@@ -102,6 +104,7 @@ export function activate(ctx: vscode.ExtensionContext) {
               ref,
               icons,
               initialValue: filePath,
+              filterByStatus,
               onDispose,
             })
             instance.show()
@@ -111,7 +114,6 @@ export function activate(ctx: vscode.ExtensionContext) {
           onDispose,
         })
         instance.show()
-        setOpenerContext('revision')
       },
     ),
   )
@@ -130,7 +132,6 @@ export function activate(ctx: vscode.ExtensionContext) {
           onDispose,
         })
         instance.show()
-        setOpenerContext('revision-file')
       },
     ),
   )

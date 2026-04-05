@@ -5,8 +5,13 @@ import type { Ref } from './git'
 export interface Opener {
   show(): void
   dispose(): void
-  triggerAction(actionOrOffset: number | string | vscode.QuickInputButton): void
-  triggerItemAction(actionOrOffset: number | string | vscode.QuickInputButton): void
+  triggerAction(actionOrOffset: number | string | InputButton): void
+  triggerItemAction(actionOrOffset: number | string | InputButton): void
+}
+
+export interface InputButton extends vscode.QuickInputButton {
+  /** ID used to target button via `triggerAction` and `triggerItemAction` commands */
+  id: string
 }
 
 /** Value set on the `inQuickOpener` context key. `false` means no opener is visible. */
@@ -19,24 +24,25 @@ export function setOpenerContext(value: OpenerContext): void {
 
 /** Resolve a button action from an offset index, string ID, or button object. */
 export function getButtonAction<
-  Action extends vscode.QuickInputButton = vscode.QuickInputButton,
+  Action extends InputButton = InputButton,
   Actions extends Record<string, Action> = Record<string, Action>,
 >(
-  actionOrOffset: number | string | Action,
-  buttons: readonly Action[] | undefined,
+  actionOrOffset: number | string | vscode.QuickInputButton,
+  buttons: readonly vscode.QuickInputButton[] | undefined,
   actionIdToButtonMap: Actions,
-): Action {
+): Action & { id: string } {
   const action =
     typeof actionOrOffset === 'number'
-      ? (buttons?.[actionOrOffset - 1] as Action)
+      ? buttons?.[actionOrOffset - 1]
       : typeof actionOrOffset === 'string'
-        ? actionIdToButtonMap[actionOrOffset]
+        ? actionIdToButtonMap[actionOrOffset] ||
+          Object.values(actionIdToButtonMap).find(btn => btn.id === actionOrOffset)
         : actionOrOffset
   if (!action) {
     const actionStr = JSON.stringify(actionOrOffset)
     throw new Error(`Unknown action (got ${actionStr})`)
   }
-  return action
+  return action as Action & { id: string }
 }
 
 /** Quick pick item that wraps a git {@link Ref}. */

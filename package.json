@@ -178,6 +178,13 @@
         "args": "toggleMessage",
         "key": "ctrl+m",
         "mac": "cmd+m"
+      },
+      {
+        "when": "inQuickOpener == 'revision-file'",
+        "command": "quickOpener.triggerAction",
+        "args": "toggleChanged",
+        "key": "ctrl+m",
+        "mac": "cmd+m"
       }
     ]
   },

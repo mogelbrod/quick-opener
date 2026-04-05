@@ -1,4 +1,6 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('node:child_process', () => ({ execFile: vi.fn() }))
 
 vi.mock('vscode', () => ({
   window: { activeTextEditor: undefined },
@@ -7,8 +9,19 @@ vi.mock('vscode', () => ({
   workspace: { getConfiguration: vi.fn(() => ({ get: vi.fn() })) },
 }))
 
+import { execFile as execFileCb } from 'node:child_process'
 import type { Ref } from './git'
-import { formatDate, formatRef, formatRefDescription, pad2, RefType, toRef } from './utils'
+import {
+  execGit,
+  formatDate,
+  formatRef,
+  formatRefDescription,
+  listChangedFilesAtRef,
+  listChangedFilesInWorkingTree,
+  pad2,
+  RefType,
+  toRef,
+} from './utils'
 
 describe('toRef()', () => {
   it('should convert a string SHA into a Ref', () => {
@@ -210,5 +223,165 @@ describe('pad2()', () => {
 
   it('should handle string input', () => {
     expect(pad2('3')).toBe('03')
+  })
+})
+
+const mockRepo = { rootUri: { fsPath: '/workspace' } } as any
+const mockApi = {
+  git: { path: '/usr/bin/git' },
+  repositories: [mockRepo],
+  getRepository: () => null,
+} as any
+
+describe('execGit()', () => {
+  const execFileMock = vi.mocked(execFileCb)
+
+  beforeEach(() => {
+    execFileMock.mockReset()
+  })
+
+  it('runs the given args and returns stdout', async () => {
+    execFileMock.mockImplementation((_p, _a, _o, cb: any) =>
+      cb(null, { stdout: 'abc123\n', stderr: '' }),
+    )
+    const result = await execGit(mockApi, ['rev-parse', 'HEAD'])
+    expect(result).toBe('abc123\n')
+    expect(execFileMock).toHaveBeenCalledWith(
+      '/usr/bin/git',
+      ['rev-parse', 'HEAD'],
+      { cwd: '/workspace' },
+      expect.any(Function),
+    )
+  })
+
+  it('throws an Error with the trimmed stderr message when the command fails', async () => {
+    const err = Object.assign(new Error('git error'), { stderr: 'fatal: not a git repository\n' })
+    execFileMock.mockImplementation((_p, _a, _o, cb: any) => cb(err))
+    await expect(execGit(mockApi, ['status'])).rejects.toThrow('fatal: not a git repository')
+  })
+
+  it('rethrows the original error when stderr is empty', async () => {
+    const err = Object.assign(new Error('spawn error'), { stderr: '' })
+    execFileMock.mockImplementation((_p, _a, _o, cb: any) => cb(err))
+    await expect(execGit(mockApi, ['status'])).rejects.toBe(err)
+  })
+})
+
+describe('listChangedFilesAtRef()', () => {
+  const execFileMock = vi.mocked(execFileCb)
+
+  function mockGitOutput(stdout: string) {
+    execFileMock.mockImplementation((_p, _a, _o, cb: any) => cb(null, { stdout, stderr: '' }))
+  }
+
+  beforeEach(() => {
+    execFileMock.mockReset()
+  })
+
+  it('passes the correct diff-tree args for the given ref', async () => {
+    mockGitOutput('')
+    await listChangedFilesAtRef(mockApi, 'abc1234')
+    expect(execFileMock).toHaveBeenCalledWith(
+      '/usr/bin/git',
+      ['diff-tree', '--no-commit-id', '--name-status', '-r', '-z', 'abc1234'],
+      { cwd: '/workspace' },
+      expect.any(Function),
+    )
+  })
+
+  it('returns an empty map for empty output', async () => {
+    mockGitOutput('')
+    expect(await listChangedFilesAtRef(mockApi, 'abc1234')).toEqual(new Map())
+  })
+
+  it('parses a single modified file', async () => {
+    mockGitOutput('M\0src/foo.ts\0')
+    expect(await listChangedFilesAtRef(mockApi, 'abc1234')).toEqual(new Map([['src/foo.ts', 'M']]))
+  })
+
+  it('parses multiple files with different statuses', async () => {
+    mockGitOutput('A\0src/new.ts\0D\0src/old.ts\0M\0src/changed.ts\0')
+    expect(await listChangedFilesAtRef(mockApi, 'abc1234')).toEqual(
+      new Map([
+        ['src/new.ts', 'A'],
+        ['src/old.ts', 'D'],
+        ['src/changed.ts', 'M'],
+      ]),
+    )
+  })
+
+  it('keys renamed files by the new path and skips the old path', async () => {
+    mockGitOutput('R100\0src/old.ts\0src/new.ts\0')
+    expect(await listChangedFilesAtRef(mockApi, 'abc1234')).toEqual(new Map([['src/new.ts', 'R']]))
+  })
+
+  it('keys copied files by the destination path', async () => {
+    mockGitOutput('C100\0src/orig.ts\0src/copy.ts\0')
+    expect(await listChangedFilesAtRef(mockApi, 'abc1234')).toEqual(new Map([['src/copy.ts', 'C']]))
+  })
+
+  it('excludes files whose status letter is not in filterByStatus', async () => {
+    mockGitOutput('A\0src/new.ts\0D\0src/old.ts\0M\0src/changed.ts\0')
+    expect(await listChangedFilesAtRef(mockApi, 'abc1234', 'A')).toEqual(
+      new Map([['src/new.ts', 'A']]),
+    )
+  })
+
+  it('normalizes status letters to uppercase', async () => {
+    mockGitOutput('m\0src/foo.ts\0')
+    expect(await listChangedFilesAtRef(mockApi, 'abc1234')).toEqual(new Map([['src/foo.ts', 'M']]))
+  })
+})
+
+describe('listChangedFilesInWorkingTree()', () => {
+  const execFileMock = vi.mocked(execFileCb)
+
+  function mockGitOutput(stdout: string) {
+    execFileMock.mockImplementation((_p, _a, _o, cb: any) => cb(null, { stdout, stderr: '' }))
+  }
+
+  beforeEach(() => {
+    execFileMock.mockReset()
+  })
+
+  it('passes the correct diff args targeting HEAD', async () => {
+    mockGitOutput('')
+    await listChangedFilesInWorkingTree(mockApi)
+    expect(execFileMock).toHaveBeenCalledWith(
+      '/usr/bin/git',
+      ['diff', '--name-status', '-z', 'HEAD'],
+      { cwd: '/workspace' },
+      expect.any(Function),
+    )
+  })
+
+  it('returns an empty map for empty output', async () => {
+    mockGitOutput('')
+    expect(await listChangedFilesInWorkingTree(mockApi)).toEqual(new Map())
+  })
+
+  it('parses modified and added files', async () => {
+    mockGitOutput('M\0src/a.ts\0A\0src/b.ts\0')
+    expect(await listChangedFilesInWorkingTree(mockApi)).toEqual(
+      new Map([
+        ['src/a.ts', 'M'],
+        ['src/b.ts', 'A'],
+      ]),
+    )
+  })
+
+  it('respects the filterByStatus parameter', async () => {
+    mockGitOutput('M\0src/a.ts\0A\0src/b.ts\0D\0src/c.ts\0')
+    expect(await listChangedFilesInWorkingTree(mockApi, 'MD')).toEqual(
+      new Map([
+        ['src/a.ts', 'M'],
+        ['src/c.ts', 'D'],
+      ]),
+    )
+  })
+
+  it('parses renamed files using the new path', async () => {
+    mockGitOutput('R100\0src/old.ts\0src/renamed.ts\0')
+    expect(await listChangedFilesInWorkingTree(mockApi)).toEqual(new Map([['src/renamed.ts', 'R']]))
   })
 })

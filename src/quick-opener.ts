@@ -2,7 +2,7 @@ import * as fs from 'fs/promises'
 import * as os from 'os'
 import * as path from 'path'
 import * as vscode from 'vscode'
-import { getButtonAction } from './opener'
+import { getButtonAction, type InputButton, setOpenerContext } from './opener'
 import { PathScanner, type ScanEntry } from './path-scanner'
 import * as putils from './path-utils'
 
@@ -63,10 +63,10 @@ export class QuickOpener {
     this.qp.onDidChangeValue(this.updateItems.bind(this))
     this.qp.onDidAccept(this.onAccept.bind(this))
     this.qp.onDidTriggerButton(button => {
-      return this.onAction(this.qp.value, button)
+      return this.onAction(this.qp.value, button as InputButton)
     })
     this.qp.onDidTriggerItemButton(event => {
-      return this.onAction(event.item.label, event.button)
+      return this.onAction(event.item.label, event.button as InputButton)
     })
   }
 
@@ -74,6 +74,7 @@ export class QuickOpener {
   show(): void {
     this.updateItems()
     this.qp.show()
+    setOpenerContext('quick')
   }
 
   /** Hide/discard the quick picker */
@@ -297,7 +298,7 @@ export class QuickOpener {
   }
 
   /** Handle quick pick button and item button events */
-  private async onAction(value: string, button: vscode.QuickInputButton) {
+  private async onAction(value: string, button: InputButton) {
     const target = this.resolveRelative(value)
     const stat = await fs.stat(target).catch(() => null)
     const uri = vscode.Uri.file(target)
@@ -401,7 +402,7 @@ export class QuickOpener {
   }
 
   /** Generate buttons for a directory item */
-  directoryButtons(absolutePath: string): readonly vscode.QuickInputButton[] {
+  directoryButtons(absolutePath: string): readonly InputButton[] {
     return this.workspacePaths.has(absolutePath) ? BUTTON_COMBOS.workspaceDir : BUTTON_COMBOS.dir
   }
 
@@ -414,7 +415,7 @@ export class QuickOpener {
     /** Does the path correspond to a file? */
     isFile: boolean,
     /** Pass `true` for default button for given path, or override. */
-    buttons: boolean | readonly vscode.QuickInputButton[] = true,
+    buttons: boolean | readonly InputButton[] = true,
   ): vscode.QuickPickItem {
     const buttonArray =
       buttons === false
@@ -440,42 +441,51 @@ export class QuickOpener {
 /** Actions available for quick pick window/items */
 export const ACTIONS = {
   create: {
+    id: 'create',
     tooltip: 'Create new file/directory using input as path',
     iconPath: new vscode.ThemeIcon('new-file'),
   },
   createFile: {
+    id: 'createFile',
     tooltip: 'Create new file using input as path',
     iconPath: new vscode.ThemeIcon('new-file'),
   },
   createDirectory: {
+    id: 'createDirectory',
     tooltip: 'Create new directory using input as path',
     iconPath: new vscode.ThemeIcon('new-folder'),
   },
   change: {
+    id: 'change',
     tooltip: 'Change starting directory',
     iconPath: new vscode.ThemeIcon('arrow-right'),
   },
   openWindow: {
+    id: 'openWindow',
     tooltip: 'Open window',
     iconPath: new vscode.ThemeIcon('multiple-windows'),
   },
   openSplit: {
+    id: 'openSplit',
     tooltip: 'Open to the side',
     iconPath: new vscode.ThemeIcon('split-horizontal'),
   },
   workspaceOpen: {
+    id: 'workspaceOpen',
     tooltip: 'Open workspace',
     iconPath: new vscode.ThemeIcon('root-folder'),
   },
   workspaceAdd: {
+    id: 'workspaceAdd',
     tooltip: 'Add to workspace',
     iconPath: new vscode.ThemeIcon('root-folder-opened'),
   },
   workspaceRemove: {
+    id: 'workspaceRemove',
     tooltip: 'Remove from workspace',
     iconPath: new vscode.ThemeIcon('close'),
   },
-} as const satisfies Record<string, vscode.QuickInputButton>
+} as const satisfies Record<string, InputButton>
 
 /** String union of all valid {@link ACTIONS} keys. */
 export type ActionId = keyof typeof ACTIONS
