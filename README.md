@@ -14,7 +14,6 @@ An extension that makes it easy to open files anywhere:
 ## Installation
 
 1. Navigate to the Quick Opener extension page within VS Code by either:
-   - Opening [this vscode magnet link](vscode:extension/mogelbrod.quickopener)
    - Visiting [visualstudio marketplace](https://marketplace.visualstudio.com/items?itemName=mogelbrod.quickopener)
    - Searching for `mogelbrod.quickopener` from the VS Code _Extensions_ sidebar
 2. Press the corresponding _Install_ button
