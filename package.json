@@ -189,10 +189,10 @@
     ]
   },
   "scripts": {
-    "clean": "rimraf dist test/dist quickopener-*.vsix .vscode-test",
-    "build": "./esbuild.mjs",
-    "build:watch": "./esbuild.mjs --watch",
-    "package": "npm run clean && ./esbuild.mjs --minify",
+    "clean": "rimraf --glob dist test/dist quickopener-*.vsix .vscode-test",
+    "build": "node esbuild.mjs",
+    "build:watch": "node esbuild.mjs --watch",
+    "package": "npm run clean && node esbuild.mjs --minify",
     "vscode:prepublish": "npm run package",
     "check": "concurrently --raw 'tsc' 'tsc -p ./test' 'biome check'",
     "fix": "biome check --write",
