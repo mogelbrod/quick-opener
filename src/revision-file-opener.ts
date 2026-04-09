@@ -40,7 +40,7 @@ export const ACTIONS = {
   openDiff: {
     id: 'openDiff',
     iconPath: new vscode.ThemeIcon('compare-changes'),
-    tooltip: 'Diff against HEAD',
+    tooltip: 'Diff against working tree',
   },
   openChanges: {
     id: 'openChanges',
@@ -70,7 +70,7 @@ const GIT_DIFF_STATUS_PRESENTATION = {
  * Quick picker listing files that exist at a given git ref.
  * Title buttons mirror the item buttons from {@link RevisionOpener}:
  * - Button 1 (openChangesButton): show changes introduced by this ref vs its parent
- * - Button 2 (openDiffButton): diff this ref against HEAD
+ * - Button 2 (openDiffButton): diff this ref against working tree
  */
 export class RevisionFileOpener implements Opener {
   readonly qp: vscode.QuickPick<FilePickItem>
@@ -219,7 +219,7 @@ export class RevisionFileOpener implements Opener {
         return
       }
       case ACTIONS.openDiff:
-        openDiffBetween(this.ref, toRef('HEAD'))
+        openDiffBetween(this.ref, WORKING_TREE_REF)
         return void this.dispose()
       case ACTIONS.openChanges: {
         const repo = getRepository(await getGitAPI())
@@ -251,7 +251,7 @@ export class RevisionFileOpener implements Opener {
         return void this.qp.hide()
       }
       case ACTIONS.openDiff: {
-        return void this.openItemDiff(item, this.ref, toRef('HEAD'))
+        return void this.openItemDiff(item, this.ref, WORKING_TREE_REF)
       }
       case ACTIONS.openChanges: {
         const repo = getRepository(await getGitAPI())
@@ -287,7 +287,7 @@ export class RevisionFileOpener implements Opener {
     const repo = getRepository(api)
     const fileUri = vscode.Uri.joinPath(repo.rootUri, item.path)
     const baseUri = api.toGitUri(fileUri, base.commit)
-    const targetUri = api.toGitUri(fileUri, target.commit)
+    const targetUri = target === WORKING_TREE_REF ? fileUri : api.toGitUri(fileUri, target.commit)
     const title = `${item.path} (${formatRef(base)} ↔ ${formatRef(target)})`
     await vscode.commands.executeCommand('vscode.diff', baseUri, targetUri, title)
   }

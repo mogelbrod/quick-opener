@@ -58,10 +58,10 @@ This command is not bound to a keyboard shortcut by default; see [Custom key bin
 - Type any commit SHA to use it directly without selecting from the list
 - Selecting a ref opens a file revision picker, enabling opening of any file that existed in that ref
 - Additional functionality is available via item buttons and keybinds:
-  - <kbd>Ctrl</kbd>-<kbd>O</kbd> - Open a multi-diff view of all changes in the given ref
-  - <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>O</kbd> - Open a multi-diff view comparing that ref to `HEAD`
+  - <kbd>Ctrl</kbd>-<kbd>O</kbd> - Open a diff view of changes in the given ref
+  - <kbd>Ctrl</kbd>-<kbd>D</kbd> - Diff the current working tree against this ref
 - Toggle visibility of additional metadata via the title bar buttons
-  - <kbd>Ctrl</kbd>-<kbd>D</kbd> - Toggle description format between short SHA or custom metadata
+  - <kbd>Ctrl</kbd>-<kbd>E</kbd> - Toggle description format between short SHA or custom metadata
   - <kbd>Ctrl</kbd>-<kbd>M</kbd> - Toggle commit message visibility
 - Customize metadata format via `quickOpener.refDescriptionFormat` setting
 
@@ -94,7 +94,7 @@ This command is not bound to a keyboard shortcut by default; see [Custom key bin
 - Additional functionality is available via item buttons and keybinds:
   - <kbd>Ctrl</kbd>-<kbd>O</kbd> - Open in split editor
   - <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>O</kbd> - Diff the file against its parent commit
-  - _Diff against HEAD_ - Diff the file at this ref against `HEAD`
+  - <kbd>Ctrl</kbd>-<kbd>D</kbd> - Diff the current working tree against the file at this ref
 
 ## Extension contributions
 
@@ -108,7 +108,7 @@ This command is not bound to a keyboard shortcut by default; see [Custom key bin
   - `branches = true` - include branches in the list
   - `tags = true` - include tags in the list
   - `file = '${relativeFile}'` - pre-fill the file input
-  - `skipFileSelection = false` - Open `file` immediately (if it exists) after selecting revision
+  - `skipFileSelection = false` - Open `file` immediately (if it exists) after selecting revision - this will also change the diff item actions to only include the `file`
   - `initialValue = ''` - pre-fill the revision input
   - `filterByStatus?: string` - forwarded to the file picker; filter files by git status letter(s) (e.g. `'AM'`)
     </small>

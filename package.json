@@ -169,6 +169,13 @@
         "when": "inQuickOpener == 'revision'",
         "command": "quickOpener.triggerAction",
         "args": "toggleDescription",
+        "key": "ctrl+e",
+        "mac": "cmd+e"
+      },
+      {
+        "when": "inQuickOpener == 'revision' || inQuickOpener == 'revision-file'",
+        "command": "quickOpener.triggerItemAction",
+        "args": "openDiff",
         "key": "ctrl+d",
         "mac": "cmd+d"
       },

@@ -16,6 +16,7 @@ import {
   openDiffBetween,
   RefType,
   toRef,
+  WORKING_TREE_REF,
 } from './utils'
 
 /** Global state key for the persisted ref description style setting. */
@@ -57,7 +58,7 @@ export const ACTIONS = {
   openDiff: {
     id: 'openDiff',
     iconPath: new vscode.ThemeIcon('compare-changes'),
-    tooltip: 'Diff against HEAD',
+    tooltip: 'Diff against working tree',
   },
   openChanges: {
     id: 'openChanges',
@@ -281,7 +282,7 @@ export class RevisionOpener implements Opener {
 
   private openDiff(item: RefQuickPickItem): void {
     const ref = toRef(item.ref)
-    openDiffBetween(ref, toRef('HEAD'), this.path)
+    openDiffBetween(ref, WORKING_TREE_REF, this.path)
   }
 
   private async openChanges(item: RefQuickPickItem): Promise<void> {

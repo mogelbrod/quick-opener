@@ -4,10 +4,22 @@ import * as vscode from 'vscode'
 vi.mock('node:child_process', () => ({ execFile: vi.fn() }))
 
 vi.mock('vscode', () => ({
-  window: { activeTextEditor: undefined },
+  window: {
+    activeTextEditor: undefined,
+    showInformationMessage: vi.fn(),
+    showErrorMessage: vi.fn(),
+  },
+  Uri: {
+    joinPath: vi.fn((base, ...segments) => {
+      const root = base.fsPath.replace(/\/+$/, '')
+      const rel = segments.join('/').replace(/^\/+/, '')
+      const fsPath = `${root}/${rel}`
+      return { scheme: 'file', fsPath, path: fsPath }
+    }),
+  },
   commands: { executeCommand: vi.fn() },
   extensions: { getExtension: vi.fn() },
-  workspace: { getConfiguration: vi.fn(() => ({ get: vi.fn() })) },
+  workspace: { getConfiguration: vi.fn(() => ({ get: vi.fn() })), textDocuments: [] },
 }))
 
 import { execFile as execFileCb } from 'node:child_process'
@@ -23,6 +35,7 @@ import {
   pad2,
   RefType,
   toRef,
+  WORKING_TREE_REF,
 } from './utils'
 
 describe('toRef()', () => {
@@ -392,6 +405,8 @@ describe('openDiffBetween()', () => {
   const mockRepo = {
     diffBetween: vi.fn(),
     diffBetweenWithStats: vi.fn(),
+    diffWith: vi.fn(),
+    rootUri: { fsPath: '/repo' },
   }
   const mockApi = {
     state: 'initialized',
@@ -414,6 +429,7 @@ describe('openDiffBetween()', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(vscode.extensions.getExtension).mockReturnValue(mockExtension as any)
+    ;(vscode.workspace as any).textDocuments = []
   })
 
   it('opens vscode.diff when exactly one file changed', async () => {
@@ -467,6 +483,90 @@ describe('openDiffBetween()', () => {
       { uri, commit: 'aaaaaaaa' },
       { uri, commit: 'bbbbbbbb' },
       'path-only.ts (main [aaaaaaaa] ↔ feature [bbbbbbbb])',
+    )
+  })
+
+  it('diffs against working tree when working tree is target', async () => {
+    const uri = { path: '/repo/src/dirty.ts', fsPath: '/repo/src/dirty.ts' } as any
+    mockRepo.diffWith.mockResolvedValue([{ uri, originalUri: uri }])
+
+    await openDiffBetween(baseRef, WORKING_TREE_REF)
+
+    expect(mockRepo.diffWith).toHaveBeenCalledWith('aaaaaaaa')
+    expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'vscode.diff',
+      { uri, commit: 'aaaaaaaa' },
+      uri,
+      'dirty.ts (main [aaaaaaaa] ↔ working tree)',
+    )
+  })
+
+  it('filters working tree diffs by path scope', async () => {
+    const inside = { path: '/repo/src/in-scope.ts', fsPath: '/repo/src/in-scope.ts' } as any
+    const outside = {
+      path: '/repo/test/out-of-scope.ts',
+      fsPath: '/repo/test/out-of-scope.ts',
+    } as any
+    mockRepo.diffWith.mockResolvedValue([
+      { uri: inside, originalUri: inside },
+      { uri: outside, originalUri: outside },
+    ])
+
+    await openDiffBetween(baseRef, WORKING_TREE_REF, 'src')
+
+    expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'vscode.diff',
+      { uri: inside, commit: 'aaaaaaaa' },
+      inside,
+      'in-scope.ts (main [aaaaaaaa] ↔ working tree)',
+    )
+  })
+
+  it('falls back to dirty unsaved file for working-tree path diff when git sees no changes', async () => {
+    mockRepo.diffWith.mockResolvedValue([])
+    const dirtyUri = { scheme: 'file', fsPath: '/repo/src/dirty.ts', path: '/repo/src/dirty.ts' }
+    ;(vscode.workspace as any).textDocuments = [{ uri: dirtyUri, isDirty: true }]
+
+    await openDiffBetween(baseRef, WORKING_TREE_REF, 'src/dirty.ts')
+
+    expect(vscode.window.showInformationMessage).not.toHaveBeenCalled()
+    expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'vscode.diff',
+      { uri: dirtyUri, commit: 'aaaaaaaa' },
+      dirtyUri,
+      'dirty.ts (main [aaaaaaaa] ↔ working tree)',
+    )
+  })
+
+  it('falls back to all dirty unsaved files in scoped folder when git sees no changes', async () => {
+    mockRepo.diffWith.mockResolvedValue([])
+    const dirtyA = { scheme: 'file', fsPath: '/repo/src/a.ts', path: '/repo/src/a.ts' }
+    const dirtyB = {
+      scheme: 'file',
+      fsPath: '/repo/src/nested/b.ts',
+      path: '/repo/src/nested/b.ts',
+    }
+    const outOfScope = {
+      scheme: 'file',
+      fsPath: '/repo/test/c.ts',
+      path: '/repo/test/c.ts',
+    }
+    ;(vscode.workspace as any).textDocuments = [
+      { uri: dirtyA, isDirty: true },
+      { uri: dirtyB, isDirty: true },
+      { uri: outOfScope, isDirty: true },
+    ]
+
+    await openDiffBetween(baseRef, WORKING_TREE_REF, 'src')
+
+    expect(vscode.window.showInformationMessage).not.toHaveBeenCalled()
+    expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'vscode.changes',
+      'main [aaaaaaaa] ↔ working tree',
+      [
+        [dirtyA, { uri: dirtyA, commit: 'aaaaaaaa' }, dirtyA],
+        [dirtyB, { uri: dirtyB, commit: 'aaaaaaaa' }, dirtyB],
+      ],
     )
   })
 })

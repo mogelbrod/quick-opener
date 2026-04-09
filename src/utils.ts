@@ -1,4 +1,5 @@
 import { execFile as execFileCb } from 'node:child_process'
+import * as path from 'node:path'
 import { promisify } from 'node:util'
 import * as vscode from 'vscode'
 import type { API, GitExtension, Ref, Repository } from './git'
@@ -159,7 +160,7 @@ function parseGitDiffOutput(
 }
 
 /** Opens a single-file diff or a multi-diff buffer for changes between two refs. */
-export async function openDiffBetween(base: Ref, target: Ref, path?: string): Promise<void> {
+export async function openDiffBetween(base: Ref, target: Ref, scopePath?: string): Promise<void> {
   if (!base.commit || !target.commit) {
     vscode.window.showErrorMessage('Quick Opener: Incomplete arguments (missing commit SHA).')
     return
@@ -167,23 +168,56 @@ export async function openDiffBetween(base: Ref, target: Ref, path?: string): Pr
   const api = await getGitAPI()
   const repo = getRepository(api)
 
-  const baseTitle = formatRef(base)
-  const targetTitle = formatRef(target)
-  const changes = path
-    ? await repo.diffBetweenWithStats(base.commit, target.commit, path)
-    : await repo.diffBetween(base.commit, target.commit)
+  const title = `${formatRef(base)} ↔ ${formatRef(target)}`
 
-  if (!changes.length) {
-    vscode.window.showInformationMessage(`No changes between ${baseTitle} and ${targetTitle}.`)
-    return
+  const scopedPath = normalizePath(scopePath)
+  const isWorkingTreeTarget = target.commit === WORKING_TREE_REF.commit
+  const changes = isWorkingTreeTarget
+    ? (await repo.diffWith(base.commit)).filter(c => {
+        if (!scopedPath) return true
+        const rel = normalizePath(path.relative(repo.rootUri.fsPath, c.uri.fsPath))
+        return rel === scopedPath || rel.startsWith(`${scopedPath}/`)
+      })
+    : scopePath
+      ? await repo.diffBetweenWithStats(base.commit, target.commit, scopePath)
+      : await repo.diffBetween(base.commit, target.commit)
+
+  // No changes found by git, but there may be dirty opened documents that match the scope.
+  if (!changes.length && isWorkingTreeTarget && scopedPath) {
+    const absoluteScope = path.isAbsolute(scopedPath)
+      ? path.normalize(scopedPath)
+      : path.join(repo.rootUri.fsPath, scopedPath)
+    const dirtyDocs = vscode.workspace.textDocuments.filter(doc => {
+      if (!doc.isDirty || doc.uri.scheme !== 'file') return false
+      const filePath = path.normalize(doc.uri.fsPath)
+      return filePath === absoluteScope || filePath.startsWith(absoluteScope + path.sep)
+    })
+    if (dirtyDocs.length) {
+      changes.push(
+        ...dirtyDocs.map(dirtyDoc => {
+          const relativePath = normalizePath(
+            path.relative(repo.rootUri.fsPath, dirtyDoc.uri.fsPath),
+          )
+          return {
+            uri: dirtyDoc.uri,
+            originalUri: vscode.Uri.joinPath(repo.rootUri, relativePath),
+            renameUri: undefined,
+            status: 0,
+          }
+        }),
+      )
+    }
   }
 
-  const title = `${baseTitle} ↔ ${targetTitle}`
+  if (!changes.length) {
+    vscode.window.showInformationMessage(`No changes between ${title}.`)
+    return
+  }
 
   if (changes.length === 1) {
     const [change] = changes
     const baseUri = api.toGitUri(change.originalUri, base.commit)
-    const targetUri = api.toGitUri(change.uri, target.commit)
+    const targetUri = isWorkingTreeTarget ? change.uri : api.toGitUri(change.uri, target.commit)
     const fileName = change.uri.path.split('/').pop() || change.uri.path
     const fileTitle = `${fileName} (${title})`
     await vscode.commands.executeCommand('vscode.diff', baseUri, targetUri, fileTitle)
@@ -193,9 +227,14 @@ export async function openDiffBetween(base: Ref, target: Ref, path?: string): Pr
   const resources = changes.map(c => [
     c.uri,
     api.toGitUri(c.originalUri, base.commit!),
-    api.toGitUri(c.uri, target.commit!),
+    isWorkingTreeTarget ? c.uri : api.toGitUri(c.uri, target.commit!),
   ])
   await vscode.commands.executeCommand('vscode.changes', title, resources)
+}
+
+function normalizePath(scope?: string): string {
+  if (!scope) return ''
+  return scope.replaceAll('\\', '/').replace(/\/+$/, '')
 }
 
 /** Normalize a string SHA or partial {@link Ref} into a fully-qualified Ref object. */
