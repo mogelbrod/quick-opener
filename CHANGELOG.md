@@ -1,3 +1,10 @@
+## [0.10.0](https://github.com/mogelbrod/quick-opener/compare/v0.9.0...v0.10.0) (2026-04-09)
+
+### Features
+
+* Limit diff item actions for revision picker triggered with `skipFileSelection=true` to `file` + change keybind for description format toggle from Ctrl-D to Ctrl-E ([18d11f4](https://github.com/mogelbrod/quick-opener/commit/18d11f48a3147b351b13e2d67507c66e79b1f03b))
+* Limit item actions (diff/show changes) in `quickOpener.showRevisionPicker` to specified `filePath` if `skipFileSelection` is enabled. ([6287164](https://github.com/mogelbrod/quick-opener/commit/62871648197e93873dbf7069d2b57322729d81b2))
+
 ## [0.9.0](https://github.com/mogelbrod/quick-opener/compare/v0.8.0...v0.9.0) (2026-04-05)
 
 ### Features

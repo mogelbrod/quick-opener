@@ -28,7 +28,7 @@
   "publisher": "mogelbrod",
   "author": "Victor Hallberg <victor@hallberg.cc>",
   "license": "MIT",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "engines": {
     "vscode": "^1.108.0",
     "node": ">=18.0.0"
