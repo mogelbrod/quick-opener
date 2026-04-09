@@ -158,8 +158,8 @@ function parseGitDiffOutput(
   return result
 }
 
-/** Opens a vscode multi-diff buffer for changes between two refs */
-export async function openDiffBetween(base: Ref, target: Ref): Promise<void> {
+/** Opens a single-file diff or a multi-diff buffer for changes between two refs. */
+export async function openDiffBetween(base: Ref, target: Ref, path?: string): Promise<void> {
   if (!base.commit || !target.commit) {
     vscode.window.showErrorMessage('Quick Opener: Incomplete arguments (missing commit SHA).')
     return
@@ -169,17 +169,33 @@ export async function openDiffBetween(base: Ref, target: Ref): Promise<void> {
 
   const baseTitle = formatRef(base)
   const targetTitle = formatRef(target)
-  const changes = await repo.diffBetween(base.commit, target.commit)
+  const changes = path
+    ? await repo.diffBetweenWithStats(base.commit, target.commit, path)
+    : await repo.diffBetween(base.commit, target.commit)
+
   if (!changes.length) {
     vscode.window.showInformationMessage(`No changes between ${baseTitle} and ${targetTitle}.`)
     return
   }
+
+  const title = `${baseTitle} ↔ ${targetTitle}`
+
+  if (changes.length === 1) {
+    const [change] = changes
+    const baseUri = api.toGitUri(change.originalUri, base.commit)
+    const targetUri = api.toGitUri(change.uri, target.commit)
+    const fileName = change.uri.path.split('/').pop() || change.uri.path
+    const fileTitle = `${fileName} (${title})`
+    await vscode.commands.executeCommand('vscode.diff', baseUri, targetUri, fileTitle)
+    return
+  }
+
   const resources = changes.map(c => [
     c.uri,
     api.toGitUri(c.originalUri, base.commit!),
     api.toGitUri(c.uri, target.commit!),
   ])
-  vscode.commands.executeCommand('vscode.changes', `${baseTitle} ↔ ${targetTitle}`, resources)
+  await vscode.commands.executeCommand('vscode.changes', title, resources)
 }
 
 /** Normalize a string SHA or partial {@link Ref} into a fully-qualified Ref object. */

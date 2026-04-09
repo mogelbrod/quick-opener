@@ -92,6 +92,7 @@ export class RevisionOpener implements Opener {
   private icons: boolean
   private includeBranches: boolean
   private includeTags: boolean
+  private path?: string
   private onDispose?: () => void
   private onAccept?: (ref: Ref) => void
 
@@ -103,6 +104,7 @@ export class RevisionOpener implements Opener {
   constructor(
     options: {
       initialValue?: string
+      path?: string
       icons?: boolean
       branches?: boolean
       tags?: boolean
@@ -120,6 +122,7 @@ export class RevisionOpener implements Opener {
     this.icons = options.icons ?? true
     this.includeBranches = options.branches !== false
     this.includeTags = options.tags !== false
+    this.path = options.path
     this.onDispose = options.onDispose
     this.onAccept = options.onAccept
 
@@ -278,7 +281,7 @@ export class RevisionOpener implements Opener {
 
   private openDiff(item: RefQuickPickItem): void {
     const ref = toRef(item.ref)
-    openDiffBetween(ref, toRef('HEAD'))
+    openDiffBetween(ref, toRef('HEAD'), this.path)
   }
 
   private async openChanges(item: RefQuickPickItem): Promise<void> {
@@ -293,7 +296,7 @@ export class RevisionOpener implements Opener {
         vscode.window.showInformationMessage(`${title} has no parent commit.`)
         return
       }
-      openDiffBetween(toRef({ commit: parent }), ref)
+      openDiffBetween(toRef({ commit: parent }), ref, this.path)
     } catch (err: any) {
       vscode.window.showErrorMessage(`Quick Opener: ${err.message}`)
     }

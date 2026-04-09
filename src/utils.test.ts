@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import * as vscode from 'vscode'
 
 vi.mock('node:child_process', () => ({ execFile: vi.fn() }))
 
@@ -18,6 +19,7 @@ import {
   formatRefDescription,
   listChangedFilesAtRef,
   listChangedFilesInWorkingTree,
+  openDiffBetween,
   pad2,
   RefType,
   toRef,
@@ -383,5 +385,88 @@ describe('listChangedFilesInWorkingTree()', () => {
   it('parses renamed files using the new path', async () => {
     mockGitOutput('R100\0src/old.ts\0src/renamed.ts\0')
     expect(await listChangedFilesInWorkingTree(mockApi)).toEqual(new Map([['src/renamed.ts', 'R']]))
+  })
+})
+
+describe('openDiffBetween()', () => {
+  const mockRepo = {
+    diffBetween: vi.fn(),
+    diffBetweenWithStats: vi.fn(),
+  }
+  const mockApi = {
+    state: 'initialized',
+    onDidChangeState: vi.fn(),
+    repositories: [mockRepo],
+    getRepository: vi.fn(() => null),
+    toGitUri: vi.fn((uri, commit) => ({ uri, commit })),
+  }
+  const mockExtension = {
+    isActive: true,
+    activate: vi.fn(),
+    exports: {
+      getAPI: vi.fn(() => mockApi),
+    },
+  }
+
+  const baseRef: Ref = { type: RefType.Head, name: 'main', commit: 'aaaaaaaa' }
+  const targetRef: Ref = { type: RefType.Head, name: 'feature', commit: 'bbbbbbbb' }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(vscode.extensions.getExtension).mockReturnValue(mockExtension as any)
+  })
+
+  it('opens vscode.diff when exactly one file changed', async () => {
+    const uri = { path: '/repo/src/file.ts', fsPath: '/repo/src/file.ts' } as any
+    mockRepo.diffBetween.mockResolvedValue([{ uri, originalUri: uri }])
+
+    await openDiffBetween(baseRef, targetRef)
+
+    expect(mockRepo.diffBetween).toHaveBeenCalledWith('aaaaaaaa', 'bbbbbbbb')
+    expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'vscode.diff',
+      { uri, commit: 'aaaaaaaa' },
+      { uri, commit: 'bbbbbbbb' },
+      'file.ts (main [aaaaaaaa] ↔ feature [bbbbbbbb])',
+    )
+  })
+
+  it('opens vscode.changes when multiple files changed', async () => {
+    const fileA = { path: '/repo/src/a.ts', fsPath: '/repo/src/a.ts' } as any
+    const fileB = { path: '/repo/src/b.ts', fsPath: '/repo/src/b.ts' } as any
+    mockRepo.diffBetween.mockResolvedValue([
+      { uri: fileA, originalUri: fileA },
+      { uri: fileB, originalUri: fileB },
+    ])
+
+    await openDiffBetween(baseRef, targetRef)
+
+    expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'vscode.changes',
+      'main [aaaaaaaa] ↔ feature [bbbbbbbb]',
+      [
+        [fileA, { uri: fileA, commit: 'aaaaaaaa' }, { uri: fileA, commit: 'bbbbbbbb' }],
+        [fileB, { uri: fileB, commit: 'aaaaaaaa' }, { uri: fileB, commit: 'bbbbbbbb' }],
+      ],
+    )
+  })
+
+  it('uses path-scoped diff and still opens vscode.diff for a single file', async () => {
+    const uri = { path: '/repo/src/path-only.ts', fsPath: '/repo/src/path-only.ts' } as any
+    mockRepo.diffBetweenWithStats.mockResolvedValue([{ uri, originalUri: uri }])
+
+    await openDiffBetween(baseRef, targetRef, 'src/path-only.ts')
+
+    expect(mockRepo.diffBetweenWithStats).toHaveBeenCalledWith(
+      'aaaaaaaa',
+      'bbbbbbbb',
+      'src/path-only.ts',
+    )
+    expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'vscode.diff',
+      { uri, commit: 'aaaaaaaa' },
+      { uri, commit: 'bbbbbbbb' },
+      'path-only.ts (main [aaaaaaaa] ↔ feature [bbbbbbbb])',
+    )
   })
 })

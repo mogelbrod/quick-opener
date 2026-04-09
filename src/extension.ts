@@ -91,6 +91,7 @@ export function activate(ctx: vscode.ExtensionContext) {
         const filePath = expandVariables(file)
         instance = new RevisionOpener({
           icons,
+          path: skipFileSelection ? filePath : undefined,
           onAccept: async ref => {
             if (skipFileSelection && filePath) {
               try {
